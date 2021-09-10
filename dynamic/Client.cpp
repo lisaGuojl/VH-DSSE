@@ -78,7 +78,7 @@ void Client::setup(vector<kv> data) {
 
 
 
-vector<string> Client::search(const string& keyword, int l) {
+vector<string> Client::search(const string& keyword) {
 	clienthandler = new ClientHandler(N, alpha, prf_seeds[0]);
   vector<string> results;
 	for (int i = 0;i < exist.size();i++) {

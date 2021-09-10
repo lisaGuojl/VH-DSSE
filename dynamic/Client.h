@@ -47,7 +47,7 @@ public:
     void setup(vector<kv> data);
     void update(const string& keyword, int ind, string& text);
     void upload();
-    vector<string> search(const string& keyword, int length);
+    vector<string> search(const string& keyword);
 };
 
 
