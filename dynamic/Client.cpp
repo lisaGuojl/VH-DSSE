@@ -28,8 +28,6 @@ Client::Client(int size, float a, int mrl) {
 }
 
 Client::~Client() {
-	ESTASH.clear();
-	EDBs.clear();
 	prf_seeds.clear();
 	delete tree;
 	delete server;
@@ -73,9 +71,21 @@ void Client::setup(vector<kv> data) {
 	}
 	server->storeEDB(EDBs, ESTASH, EBUF, min);
 	EBUF.clear();
+	ESTASH.clear();
+	EDBs.clear();
 }
 
+string Client::decrypt(string& cipher, uint8_t* key) {
 
+	unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
+	stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+	int decryption_len;
+	unsigned char decryption_text[1000];
+	decryption_len = aes_decrypt(encrypted_data, cipher.length(), key, iv, decryption_text);
+	string result = string((const char*)(decryption_text), decryption_len);
+
+	return result;
+}
 
 vector<string> Client::search(const string& keyword) {
 	vector<string> results;
@@ -88,50 +98,25 @@ vector<string> Client::search(const string& keyword) {
 			token = clienthandler->getToken(keyword, li, &prf_seed[0]);
 			vector<string> Xi = server->searchEDB(i, token);
 			for (auto cipher : Xi) {
-				unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-				//strncpy((char*)encrypted_data, table.table(index).c_str(), table.table(index).length() + 1);
-				stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
-				int decryption_len;
-				unsigned char decryption_text[1000];
-				decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kske, iv, decryption_text);
-				//string result = reinterpret_cast<const char*>(decryption_text);
-
-				string result = string((const char*)(decryption_text), decryption_len);
-				results.push_back(result);
+				string plain = decrypt(cipher, Kske);
+				results.emplace_back(plain);
 			}
 			Xi.clear();
 		}
 
 	vector<string> stash = server->searchEstash();
 	for (auto cipher : stash) {
-		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		//strncpy((char*)encrypted_data, table.table(index).c_str(), table.table(index).length() + 1);
-		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
-		int decryption_len;
-		unsigned char decryption_text[100];
-		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kstash, iv, decryption_text);
-		//string result = reinterpret_cast<const char*>(decryption_text);
-		string result = string((const char*)(decryption_text), decryption_len);
-		results.push_back(result);
+		string plain = decrypt(cipher, Kstash);
+		results.emplace_back(plain);
 	}
 	stash.clear();
 
 	vector<string> buf = server->searchBuffer();
-
 	for (auto cipher : buf) {
-		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		//strncpy((char*)encrypted_data, table.table(index).c_str(), table.table(index).length() + 1);
-		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
-		int decryption_len;
-		unsigned char decryption_text[100] = {};
-		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kbuf, iv, decryption_text);
-		//string result = reinterpret_cast<const char*>(decryption_text);
-		string result = string((const char*)(decryption_text), decryption_len);
-		results.push_back(result);
+		string plain = decrypt(cipher, Kbuf);
+		results.emplace_back(plain);
 	}
 	buf.clear();
-
-	
 	}
 
 	return results;
@@ -168,33 +153,16 @@ void Client::updateDB() {
 	vector<pair<int, vector<string>>> edbs = server->updateDB();
 
 	vector<string> plains = {};
-	bitset<2> dummy;
 	for (auto cipher : stash) {
-		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
-		int decryption_len;
-		unsigned char decryption_text[100] = {};
-		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kstash, iv, decryption_text);
-		string result = string((const char*)(decryption_text), decryption_len);
-		if(result != dummy.to_string()){
-			plains.push_back(result);
-		}
+		string plain = decrypt(cipher, Kstash);
+		plains.emplace_back(plain);
 	}
 
 	for (auto pair : edbs) {
-		exist[pair.first] = false;
 		for (auto cipher : pair.second) {
-			unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-			stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
-			int decryption_len;
-			unsigned char decryption_text[100] = {};
-			decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kske, iv, decryption_text);
-			string result = string((const char*)(decryption_text), decryption_len);
-			if(result != dummy.to_string()){
-				plains.push_back(result);
-			}	
+			string plain = decrypt(cipher, Kske);
+			plains.emplace_back(plain);
 		}
-
 	}
 
 	vector<string>  bufplain = {};
@@ -212,7 +180,7 @@ void Client::updateDB() {
         				iter = plains.erase(iter);
         				break;
         			}
-        		}
+        	}
 		}
 		else {
         		bufplain.emplace_back(result);
@@ -224,12 +192,65 @@ void Client::updateDB() {
 	exist[MIN] = true;
 	plains.insert(plains.end(), bufplain.begin(), bufplain.end());
 	int stash_len = clienthandler->addEDB((int)(1 << MIN), prf_seeds[MIN], plains);
-	EDBs[MIN] = clienthandler->get_edb();
+	vector<string> EDB = clienthandler->get_edb();
 	if (stash_len > 0) {
 		vector<string> estash = clienthandler->get_estash();
 		for (string stash : estash) {
 			ESTASH.emplace_back(stash);
 		}
 	}
-	server->storeEDB(MIN, EDBs[MIN], ESTASH);
+	server->storeEDB(MIN, EDB, ESTASH);
+	for (auto pair : edbs) {
+		exist[pair.first] = false;
+	}
+}
+
+
+vector<int> Client::process(const string& keyword, vector<string> plains) {
+	uint8_t* pair = new uint8_t[keyword.length() + 1];
+	stringcpy((char*)pair, keyword.length() + 1, keyword.c_str());
+	uint8_t digest[32] = {};
+	sha256_digest(pair, keyword.length(), digest);
+	int tag = digest[4] | (digest[1] << 8);
+
+	vector<int> results;
+	vector<int> delitems;
+	for (auto plain : plains) {
+		if (plain == "00") {
+			continue;
+		}
+		if (plain.length() == 0) {
+			continue;
+		}
+		string result = plain.substr(0, plain.length() - 1);
+		int index = stoul(result, nullptr, 0);
+		bitset<32> bits(index);
+		bitset<16> tagbits;
+		for (int i = 0; i < 16;i++) {
+			tagbits[i] = bits[i + 16];
+		}
+		if ((int)(tagbits.to_ulong()) == tag) {
+			bitset<15> indbits;
+			for (int i = 0; i < 15;i++) {
+				indbits[i] = bits[i + 1];
+			}
+			if (plain[plain.length()] == 0) {
+				results.emplace_back((int)(indbits.to_ulong()));
+			}
+			else {
+				delitems.emplace_back((int)(indbits.to_ulong()));
+			}
+			
+		}
+		
+	}
+	for (auto delitem : delitems) {
+		for (vector<int>::const_iterator iter = results.begin(); iter != results.end(); iter++) {
+			if (delitem == *iter) {
+				iter = results.erase(iter);
+				break;
+			}
+		}
+	}
+	return results;
 }

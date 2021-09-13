@@ -1,7 +1,5 @@
-﻿//#pragma warning(disable:4996)
-
+﻿
 #include <iostream>
-//#include "ClientHandler.h"
 #include "Client.h"
 #include "Utils.h"
 
@@ -38,10 +36,14 @@ int main() {
 	client.setup(data);
 	cout << "setup completed" << endl;
 	vector<string> res = client.search("test");
-	cout << "search result:" << res.size() << endl;
-	//for (auto i : res) {
-	//	cout << i << endl;
-	//}
+	cout << "raw search result:" << res.size() << endl;
+	vector<int> inds = client.process("test", res);
+	sort(inds.begin(), inds.end());
+	inds.erase(unique(inds.begin(), inds.end()), inds.end());
+	cout << "processed search result:" << inds.size() << endl;
+	for (auto ind : inds) {
+		cout << ind << endl;
+	}
 	for(int i = 0; i<8; i++){
 		client.update("new", i, ADD);
 	}

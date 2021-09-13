@@ -38,16 +38,18 @@ private:
     ClientHandler* clienthandler;
     Server* server;
 
-    unsigned long get_index(const string& keyword, unsigned short ind);
+
+    string decrypt(string& cipher, uint8_t* key);
+    
     void updateDB();
 
 public:
     Client(int size, float alpha, int mrl);
     ~Client();
-    int stash_len;
     void setup(vector<kv> data);
     vector<string> search(const string& keyword);
     void update(const string& keyword, int ind, OP op);
+    vector<int> process(const string& keyword, vector<string> plains);
     
 };
 
