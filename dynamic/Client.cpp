@@ -103,6 +103,7 @@ vector<string> Client::search(const string& keyword) {
 			}
 			Xi.clear();
 		}
+	}
 
 	vector<string> stash = server->searchEstash();
 	for (auto cipher : stash) {
@@ -117,7 +118,6 @@ vector<string> Client::search(const string& keyword) {
 		results.emplace_back(plain);
 	}
 	buf.clear();
-	}
 
 	return results;
 }
@@ -155,17 +155,23 @@ void Client::updateDB() {
 	vector<string> plains = {};
 	for (auto cipher : stash) {
 		string plain = decrypt(cipher, Kstash);
-		plains.emplace_back(plain);
+		if (plain.length() != 0 && plain != "NULL") {
+			plains.emplace_back(plain);
+		}
 	}
 
 	for (auto pair : edbs) {
 		for (auto cipher : pair.second) {
 			string plain = decrypt(cipher, Kske);
-			plains.emplace_back(plain);
+			if (plain.length() != 0 && plain != "NULL") {
+				plains.emplace_back(plain);
+			}
 		}
 	}
 
+
 	vector<string>  bufplain = {};
+	string del = "1";
 	for (auto cipher : buf) {
 		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
 		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
@@ -173,7 +179,8 @@ void Client::updateDB() {
 		unsigned char decryption_text[100] = {};
 		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kbuf, iv, decryption_text);
 		string result = string((const char*)(decryption_text), decryption_len);
-		if (result[result.length()]==1){
+		//cout<< result <<endl;
+		if (result.length() != 0 && result[result.length() - 1] == del[0]) {
 			string delitem = result.substr(0, result.length() - 1) + "0";
 			for (vector<string>::const_iterator iter=plains.begin(); iter !=plains.end(); iter++){
         			if (delitem == *iter){
@@ -181,13 +188,13 @@ void Client::updateDB() {
         				break;
         			}
         	}
+			bufplain.emplace_back(result);
 		}
 		else {
         		bufplain.emplace_back(result);
         	}
 	}
-
-		
+	
 	MIN = MIN+1;
 	exist[MIN] = true;
 	plains.insert(plains.end(), bufplain.begin(), bufplain.end());
@@ -215,8 +222,9 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 
 	vector<int> results;
 	vector<int> delitems;
+	string add = "0";
 	for (auto plain : plains) {
-		if (plain == "00") {
+		if (plain == "NULL") {
 			continue;
 		}
 		if (plain.length() == 0) {
@@ -234,7 +242,7 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 			for (int i = 0; i < 15;i++) {
 				indbits[i] = bits[i + 1];
 			}
-			if (plain[plain.length()] == 0) {
+			if (plain[plain.length() - 1] == add[0]) {
 				results.emplace_back((int)(indbits.to_ulong()));
 			}
 			else {
@@ -244,6 +252,8 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 		}
 		
 	}
+	sort(results.begin(), results.end());
+	results.erase(unique(results.begin(), results.end()), results.end());
 	for (auto delitem : delitems) {
 		for (vector<int>::const_iterator iter = results.begin(); iter != results.end(); iter++) {
 			if (delitem == *iter) {
@@ -252,5 +262,6 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 			}
 		}
 	}
+
 	return results;
 }

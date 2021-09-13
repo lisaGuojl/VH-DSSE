@@ -38,8 +38,6 @@ int main() {
 	vector<string> res = client.search("test");
 	cout << "raw search result:" << res.size() << endl;
 	vector<int> inds = client.process("test", res);
-	sort(inds.begin(), inds.end());
-	inds.erase(unique(inds.begin(), inds.end()), inds.end());
 	cout << "processed search result:" << inds.size() << endl;
 	for (auto ind : inds) {
 		cout << ind << endl;
@@ -47,7 +45,18 @@ int main() {
 	for(int i = 0; i<8; i++){
 		client.update("new", i, ADD);
 	}
-	cout << "update done" << endl;
+	for (int i = 0; i < 8; i++) {
+		client.update("test", i, DEL);
+	}
+	res.clear();
+	inds.clear();
+	res = client.search("test");
+	inds = client.process("test", res);
+	cout << "processed search result:" << inds.size() << endl;
+	sort(inds.begin(), inds.end());
+	for (auto ind : inds) {
+		cout << ind << endl;
+	}
 	return 0;
 
 }

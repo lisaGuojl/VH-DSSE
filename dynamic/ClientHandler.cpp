@@ -1,7 +1,5 @@
-#include "ClientHandler.h"
 #include <iostream>
-using namespace cuckoo;
-using namespace std;
+#include "ClientHandler.h"
 
 ClientHandler::ClientHandler(float a) {
 	alpha = a;
@@ -35,48 +33,34 @@ unsigned long ClientHandler::get_index(const string& keyword, unsigned short ind
 	return bits.to_ulong();
 }
 
-void ClientHandler::update(const string& keyword, int ind, string& text) {
+void ClientHandler::update(const string& keyword, int ind, OP op, string& input_text) {
 	
 	unsigned long index = get_index(keyword, ind);
+	string text;
+	if (op == ADD) {
+		text = to_string(index) + "0";
+	}
+	else {
+		text = to_string(index) + "1";
+	}
 	bool res = table->insert(index, text);
 	if (res == false) {
 		stash_len += 1;
 		//stash.push_back(text);
 		//std::bitset<32> bits = index;
-		string plain = to_string(index) + "0";
-		stash.emplace_back(plain);
+		stash.emplace_back(text);
 	}
 }
-
-
-int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
-	stash_len = 0;
-	stash.clear();
-	vector<uint8_t> seed(seedstr.begin(), seedstr.end());
-	prf_seed = &seed[0];
-	uint32_t table_size = ceil(size * 2 * (1 + alpha));
-	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	table = new KukuTable(table_size, 0, 1, empty_item, prf_seed);
-	for (kv item : db) {
-		update(item.keyword, item.ind, item.text);
-	}
-	upload();
-	delete table;
-	return stash_len;
-}
-
-
 
 void ClientHandler::upload() {
 	for (uint32_t i = 0; i < table->table_size(); ++i) {
-		string plain = to_string(table->table(i).first)+"0";
+		string plain = table->table(i).second;
 		unsigned char* data = new unsigned char[plain.length()+1];
 		stringcpy((char*)data, plain.length() + 1, plain.c_str());
 		int ciphertext_len = 0;
 		unsigned char ciphertext[100] = {};
 		ciphertext_len = aes_encrypt(data, plain.length(), key, iv, ciphertext);
-
-		table->insert_by_loc((location_type)(i), reinterpret_cast<char*>(ciphertext));
+		//table->insert_by_loc((location_type)(i), reinterpret_cast<char*>(ciphertext));
 		edb.push_back(string((char*)ciphertext, ciphertext_len));
 	}
 
@@ -90,6 +74,22 @@ void ClientHandler::upload() {
 	}
 }
 
+
+int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
+	stash_len = 0;
+	stash.clear();
+	vector<uint8_t> seed(seedstr.begin(), seedstr.end());
+	prf_seed = &seed[0];
+	uint32_t table_size = ceil(size * 2 * (1 + alpha));
+	item_type empty_item = make_pair((unsigned long)0, "NULL");
+	table = new KukuTable(table_size, 0, 1, empty_item, prf_seed);
+	for (kv item : db) {
+		update(item.keyword, item.ind, item.op, item.text);
+	}
+	upload();
+	delete table;
+	return stash_len;
+}
 
 vector<string> ClientHandler::get_edb() {
 	return edb;
@@ -145,6 +145,7 @@ int ClientHandler::addEDB(int size, string& seedstr, vector<string> plains)
 			continue;
 		}
 		string index_str = plain.substr(0, plain.length() - 1);
+		//cout << index_str << endl;
 		//bitset<32> index_bit(index_str);
 		//uint32_t index = index_bit.to_ulong();
 		unsigned long index = stoul(index_str, nullptr, 0);

@@ -1,16 +1,14 @@
 #pragma once
-
-
 #ifndef CLIENTHANDLER_H
 #define CLIENTHANDLER_H
-
 
 #include <functional>
 #include <string>
 #include "GGMTree.h"
 #include "cuckoo.h"
-#include "ServerHandler.h"
+#include "Utils.h"
 using namespace std;
+using namespace cuckoo;
 #ifdef _WIN32
 #define stringcpy(destination, length, source) strcpy_s(destination, length, source)
 #else
@@ -53,7 +51,7 @@ public:
     int setup(int size, string& seedstr, vector<kv> db);
     vector<string> get_edb();
     vector<string> get_estash();
-    void update(const string& keyword, int ind, string& text);
+    void update(const string& keyword, int ind, OP op, string& text);
     void upload();
     vector<GGMNode> getToken(const string& keyword, int length, uint8_t* prf_seed);
     int addEDB(int size, string& seedstr, vector<string> plains);

@@ -49,6 +49,7 @@ public:
     void setup(vector<kv> data);
     vector<string> search(const string& keyword);
     void update(const string& keyword, int ind, OP op);
+
     vector<int> process(const string& keyword, vector<string> plains);
     
 };
