@@ -17,6 +17,7 @@ vector<kv> generate_samples(int size) {
 			kv sample;
 			sample.keyword = keywords[i];
 			sample.ind = j;
+			sample.op = ADD;
 			string id = std::to_string(j);
 			sample.text = keywords[i] + id + "ADD";
 			data.emplace_back(sample);
@@ -42,7 +43,7 @@ int main() {
 	//	cout << i << endl;
 	//}
 	for(int i = 0; i<8; i++){
-		client.update("new", i,"ADD");
+		client.update("new", i, ADD);
 	}
 	cout << "update done" << endl;
 	return 0;

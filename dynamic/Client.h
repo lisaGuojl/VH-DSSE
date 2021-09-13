@@ -47,7 +47,7 @@ public:
     int stash_len;
     void setup(vector<kv> data);
     vector<string> search(const string& keyword);
-    void update(const string& keyword, int ind, const string& text);
+    void update(const string& keyword, int ind, OP op);
     
 };
 

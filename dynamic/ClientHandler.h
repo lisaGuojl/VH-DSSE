@@ -20,12 +20,13 @@ using namespace std;
 using namespace cuckoo;
 
 enum OP {
-    INS, DEL
+    ADD, DEL
 };
 
 struct kv {
     string keyword;
     int ind;
+    OP op;
     string text;
 };
 
@@ -35,7 +36,7 @@ private:
     uint8_t* iv = (unsigned char*)"0123456789123456";
     uint8_t* prf_seed = (unsigned char*)"0123456789123456";
 
-
+    float alpha;
     GGMTree* tree;
     KukuTable* table;
     std::vector<string> stash;
@@ -45,17 +46,17 @@ private:
     //unsigned long get_index(const string& keyword, unsigned short ind);
 
 public:
-    ClientHandler(int size, float alpha, string& seedstr);
+    ClientHandler(float alpha);
     ~ClientHandler();
     int stash_len;
     unsigned long get_index(const string& keyword, unsigned short ind);
-    int setup(vector<kv> db);
+    int setup(int size, string& seedstr, vector<kv> db);
     vector<string> get_edb();
     vector<string> get_estash();
     void update(const string& keyword, int ind, string& text);
     void upload();
     vector<GGMNode> getToken(const string& keyword, int length, uint8_t* prf_seed);
-    int addEDB(vector<string> plains);
+    int addEDB(int size, string& seedstr, vector<string> plains);
 };
 
 

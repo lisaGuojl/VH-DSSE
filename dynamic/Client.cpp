@@ -8,6 +8,7 @@ Client::Client(int size, float a, int mrl) {
 	beta = (float)mrl / N;
 	server = new Server();
 	tree = new GGMTree(GGM_SIZE);
+	clienthandler = new ClientHandler(alpha);
 
 	for (int i = 0; i <= floor(log2(N)); i++) {
 		exist.push_back(false);
@@ -32,6 +33,7 @@ Client::~Client() {
 	prf_seeds.clear();
 	delete tree;
 	delete server;
+	delete clienthandler;
 }
 
 void Client::setup(vector<kv> data) {
@@ -43,9 +45,8 @@ void Client::setup(vector<kv> data) {
 	for (int i = logN; i >= min; i--) {	
 		if (bits[i] == 1) {
 			exist[i] = true;
-			clienthandler = new ClientHandler((int)1<<i, alpha, prf_seeds[i]);
 			vector<kv> db(data.begin() + idx, data.begin() + idx + (int)(1 << i));
-			int stash_len = clienthandler->setup(db);
+			int stash_len = clienthandler->setup((int)1 << i, prf_seeds[i], db);
 			EDBs[i] = clienthandler->get_edb();
 			if (stash_len>0) {
 				vector<string> estash = clienthandler->get_estash();
@@ -53,7 +54,6 @@ void Client::setup(vector<kv> data) {
 					ESTASH.emplace_back(stash);
 				}
 			}	
-			delete clienthandler;
 			idx += (int)(1 << i);
 		}
 	}
@@ -61,10 +61,8 @@ void Client::setup(vector<kv> data) {
 		for (int i = idx;i < N;i++) {
 			kv item = data[i];
 			unsigned long index = clienthandler->get_index(item.keyword, item.ind);
-			//std::bitset<32> bits = index;
 			string text = to_string(index) + "0";
 			unsigned char* data = new unsigned char[text.length() + 1];
-			//strncpy((char*)data, table->table(i).second.c_str(), table->table(i).second.length() + 1);
 			stringcpy((char*)data, text.length() + 1, text.c_str());
 			int ciphertext_len = 0;
 			unsigned char ciphertext[100] = {};
@@ -80,9 +78,7 @@ void Client::setup(vector<kv> data) {
 
 
 vector<string> Client::search(const string& keyword) {
-	clienthandler = new ClientHandler(N, alpha, prf_seeds[0]);
 	vector<string> results;
-	
 	for (int i = 0;i < exist.size();i++) {
 		if (exist[i] == true) {
 			int li = (int)ceil(beta * (int)(1 << i));
@@ -142,12 +138,15 @@ vector<string> Client::search(const string& keyword) {
 }
 
 
-void Client::update(const string& keyword, int ind, const string& text) {
-	clienthandler = new ClientHandler(MIN, alpha, prf_seeds[0]);
+void Client::update(const string& keyword, int ind, OP op) {
 	unsigned long index = clienthandler->get_index(keyword, ind);
-	//std::bitset<32> bits = index;
-	//string plain = bits.to_string() + "0";
-	string plain = to_string(index) + "0";
+	string plain;
+	if (op == ADD) {
+		plain = to_string(index) + "0";
+	}
+	else {
+		plain = to_string(index) + "1";
+	}
 	unsigned char* data = new unsigned char[plain.length() + 1];
 	stringcpy((char*)data, plain.length() + 1, plain.c_str());
 	int ciphertext_len = 0;
@@ -155,7 +154,6 @@ void Client::update(const string& keyword, int ind, const string& text) {
 	ciphertext_len = aes_encrypt(data, plain.length(), Kbuf, iv, ciphertext);
 	string ct = string((char*)ciphertext, ciphertext_len);
 	bool res = server->update(ct);
-	delete clienthandler;
 	if (res == false) {
 		updateDB();
 	}
@@ -173,12 +171,10 @@ void Client::updateDB() {
 	bitset<2> dummy;
 	for (auto cipher : stash) {
 		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		//strncpy((char*)encrypted_data, table.table(index).c_str(), table.table(index).length() + 1);
 		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
 		int decryption_len;
 		unsigned char decryption_text[100] = {};
 		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kstash, iv, decryption_text);
-		//string result = reinterpret_cast<const char*>(decryption_text);
 		string result = string((const char*)(decryption_text), decryption_len);
 		if(result != dummy.to_string()){
 			plains.push_back(result);
@@ -189,12 +185,10 @@ void Client::updateDB() {
 		exist[pair.first] = false;
 		for (auto cipher : pair.second) {
 			unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-			//strncpy((char*)encrypted_data, table.table(index).c_str(), table.table(index).length() + 1);
 			stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
 			int decryption_len;
 			unsigned char decryption_text[100] = {};
 			decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kske, iv, decryption_text);
-			//string result = reinterpret_cast<const char*>(decryption_text);
 			string result = string((const char*)(decryption_text), decryption_len);
 			if(result != dummy.to_string()){
 				plains.push_back(result);
@@ -229,8 +223,7 @@ void Client::updateDB() {
 	MIN = MIN+1;
 	exist[MIN] = true;
 	plains.insert(plains.end(), bufplain.begin(), bufplain.end());
-	clienthandler = new ClientHandler((int)(1<<MIN), alpha, prf_seeds[MIN]);
-	int stash_len = clienthandler->addEDB(plains);
+	int stash_len = clienthandler->addEDB((int)(1 << MIN), prf_seeds[MIN], plains);
 	EDBs[MIN] = clienthandler->get_edb();
 	if (stash_len > 0) {
 		vector<string> estash = clienthandler->get_estash();
@@ -238,6 +231,5 @@ void Client::updateDB() {
 			ESTASH.emplace_back(stash);
 		}
 	}
-	delete clienthandler;
 	server->storeEDB(MIN, EDBs[MIN], ESTASH);
 }
