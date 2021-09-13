@@ -34,11 +34,6 @@ unsigned int key_derivation(unsigned char* plaintext, int plaintext_len,
     unsigned char* key, int key_len,
     unsigned char* digest);
 
-
-unsigned int hmac_digest(unsigned char* plaintext, int plaintext_len,
-    unsigned char* key, int key_len,
-    unsigned char* digest);
-
 //std::string uint82hex(const uint8_t* data, int data_length) {
 //    std::stringstream ss;
 //    ss << std::hex << std::setfill('0');
