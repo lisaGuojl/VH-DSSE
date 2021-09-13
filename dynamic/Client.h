@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <algorithm>
 #include "GGMTree.h"
 #include "cuckoo.h"
 # include "ClientHandler.h"
@@ -15,12 +16,12 @@ using namespace std;
 
 class Client {
 private:
-    uint32_t N;
+    int N;
     float alpha;
     float beta;
 
-    uint8_t* Kstash = (unsigned char*)"0123456789123456";
-    uint8_t* Kbuf = (unsigned char*)"7891234560123456";
+    uint8_t* Kstash = (unsigned char*)"7891234560123456";
+    uint8_t* Kbuf = (unsigned char*)"0123456789123456";
     uint8_t* Kske = (unsigned char*)"7891234560123456";
     uint8_t* iv = (unsigned char*)"0123456789123456";
     uint8_t* seed = (unsigned char*)"0123456789123456";
@@ -28,26 +29,26 @@ private:
 
 
     GGMTree* tree;
-    KukuTable* table;
     std::vector<string> ESTASH;
     std::vector<string> EBUF;
     std::unordered_map<int, vector<string>> EDBs;
     vector<bool> exist;
-    
+    int MIN;    
 
     ClientHandler* clienthandler;
     Server* server;
 
     unsigned long get_index(const string& keyword, unsigned short ind);
+    void updateDB();
 
 public:
     Client(int size, float alpha, int mrl);
     ~Client();
     int stash_len;
     void setup(vector<kv> data);
-    void update(const string& keyword, int ind, string& text);
-    void upload();
     vector<string> search(const string& keyword);
+    void update(const string& keyword, int ind, const string& text);
+    
 };
 
 

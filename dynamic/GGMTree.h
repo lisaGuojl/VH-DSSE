@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PUNCTURABLE_PRF_GGMTREE_H
 #define PUNCTURABLE_PRF_GGMTREE_H
 

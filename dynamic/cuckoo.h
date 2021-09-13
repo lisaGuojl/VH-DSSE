@@ -185,7 +185,7 @@ namespace cuckoo {
             GGMTree::derive_key_from_tree(derived_key, index, tree->get_level(), 0);
             location_type loc;
             
-            while(true) {
+            while (true) {
                 uint32_t loc32 = derived_key[0] | (derived_key[1] << 8) | (derived_key[2] << 16) | (derived_key[3] << 24);
                 int length = ceil(log2(table_size_));
                 loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
