@@ -19,7 +19,12 @@ make
 After compiling the project, two executable files *StaticTest* and *DynamicTest* will be generated. 
 *StaticTest* is used to evaluate the performance of the Modified Static Volume-hiding SSE scheme *dprfMM*.
 *DynamicTest* is used to evaluate the performance of Single-Copy VH-DSSE.
-
+```
+# For dprfMM test
+./StaticTest
+# For VH-DSSE test
+./DynamicTest
+```
 
 
 
