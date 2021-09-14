@@ -1,4 +1,6 @@
-# Volume-Hiding Dynamic Searchable Symmetric Encryption with Forward and Backward Privacy [[link]](https://eprint.iacr.org/2021/786.pdf)
+# VH-DSSE
+
+This repository is an implementation of Volume-Hiding Dynamic Searchable Symmetric Encryption with Forward and Backward Privacy [[link]](https://eprint.iacr.org/2021/786.pdf).
 
 ## Requirements
 
