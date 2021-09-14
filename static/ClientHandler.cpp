@@ -115,9 +115,11 @@ vector<string> ClientHandler::search(const string& keyword, int l)
 	vector<string> results;
 	vector<string> ciphers = server->search(remain_node);
 	for (auto cipher : ciphers) {
-		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		strncpy((char*)encrypted_data, cipher.c_str(), cipher.length() + 1);
-		//strcpy_s((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+		unsigned char encrypted_data[1000] = {};
+		for (int i = 0; i < (cipher.length());i++) {
+			encrypted_data[i] = cipher[i];
+		}
+		encrypted_data[cipher.length() + 1] = '\0';
 		int decryption_len;
 		unsigned char decryption_text[20];
 		decryption_len = aes_decrypt(encrypted_data, cipher.length(), key, iv, decryption_text);

@@ -3,8 +3,6 @@
 #include "Client.h"
 #include "Utils.h"
 
-using namespace std;
-using namespace cuckoo;
 
 vector<kv> generate_samples(int size) {
 	vector<kv> data(0);

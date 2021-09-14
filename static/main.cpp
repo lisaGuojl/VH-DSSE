@@ -4,12 +4,12 @@
 #include "ClientHandler.h"
 #include "Utils.h"
 
+
 using namespace std;
 using namespace cuckoo;
 
 
 int main() {
-
 	int db_size = 900;
 	float alpha = 0.1;
 	uint32_t a = ceil(db_size * 2 * (1 + alpha));

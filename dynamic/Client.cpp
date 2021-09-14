@@ -76,9 +76,13 @@ void Client::setup(vector<kv> data) {
 }
 
 string Client::decrypt(string& cipher, uint8_t* key) {
-
-	unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-	stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+	//unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
+	//stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+	unsigned char encrypted_data[1000] = {};
+	for (int i = 0; i < (cipher.length());i++) {
+		encrypted_data[i] = cipher[i];
+	}
+	encrypted_data[cipher.length() + 1] = '\0';
 	int decryption_len;
 	unsigned char decryption_text[1000];
 	decryption_len = aes_decrypt(encrypted_data, cipher.length(), key, iv, decryption_text);
@@ -137,6 +141,7 @@ void Client::update(const string& keyword, int ind, OP op) {
 	int ciphertext_len = 0;
 	unsigned char ciphertext[100] = {};
 	ciphertext_len = aes_encrypt(data, plain.length(), Kbuf, iv, ciphertext);
+	//std::string ct(reinterpret_cast<char*>(ciphertext), ciphertext_len/ sizeof(ciphertext[0]));	
 	string ct = string((char*)ciphertext, ciphertext_len);
 	bool res = server->update(ct);
 	if (res == false) {
@@ -155,7 +160,7 @@ void Client::updateDB() {
 	vector<string> plains = {};
 	for (auto cipher : stash) {
 		string plain = decrypt(cipher, Kstash);
-		if (plain.length() != 0 && plain != "NULL") {
+		if (plain != "NULL") {
 			plains.emplace_back(plain);
 		}
 	}
@@ -163,7 +168,7 @@ void Client::updateDB() {
 	for (auto pair : edbs) {
 		for (auto cipher : pair.second) {
 			string plain = decrypt(cipher, Kske);
-			if (plain.length() != 0 && plain != "NULL") {
+			if (plain != "NULL") {
 				plains.emplace_back(plain);
 			}
 		}
@@ -173,14 +178,18 @@ void Client::updateDB() {
 	vector<string>  bufplain = {};
 	string del = "1";
 	for (auto cipher : buf) {
-		unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-		stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+		//unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
+		//stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
+		unsigned char encrypted_data[1000] = {};
+		for (int i = 0; i < (cipher.length());i++) {
+			encrypted_data[i] = cipher[i];
+		}
+		encrypted_data[cipher.length() + 1] = '\0';
 		int decryption_len = 0;
-		unsigned char decryption_text[100] = {};
+		unsigned char decryption_text[1000] = {};
 		decryption_len = aes_decrypt(encrypted_data, cipher.length(), Kbuf, iv, decryption_text);
 		string result = string((const char*)(decryption_text), decryption_len);
-		//cout<< result <<endl;
-		if (result.length() != 0 && result[result.length() - 1] == del[0]) {
+		if (result[result.length() - 1] == del[0]) {
 			string delitem = result.substr(0, result.length() - 1) + "0";
 			for (vector<string>::const_iterator iter=plains.begin(); iter !=plains.end(); iter++){
         			if (delitem == *iter){
