@@ -77,12 +77,13 @@ void ClientHandler::upload() {
 
 int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
 	stash_len = 0;
+  edb.clear();
 	stash.clear();
 	vector<uint8_t> seed(seedstr.begin(), seedstr.end());
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	table = new KukuTable(table_size, 0, 100, empty_item, prf_seed);
+	table = new KukuTable(table_size, 0, 50, empty_item, prf_seed);
 	for (kv item : db) {
 		update(item.keyword, item.ind, item.op, item.text);
 	}

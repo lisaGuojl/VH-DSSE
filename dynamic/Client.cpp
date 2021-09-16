@@ -35,6 +35,9 @@ Client::~Client() {
 }
 
 void Client::setup(vector<kv> data) {
+  EDBs.clear();
+  ESTASH.clear();
+  EBUF.clear();
 	int idx = 0;
 	int logN = floor(log2(N));
 	int min = floor(log2(logN));
