@@ -274,3 +274,8 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 
 	return results;
 }
+
+int Client::getStashSize() {
+	int res = server->getStashSize();
+	return res;
+}

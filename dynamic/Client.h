@@ -51,7 +51,7 @@ public:
     void update(const string& keyword, int ind, OP op);
 
     vector<int> process(const string& keyword, vector<string> plains);
-    
+    int getStashSize();
 };
 
 

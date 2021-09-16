@@ -25,11 +25,6 @@ void Server::storeEDB(const unordered_map<int, vector<string>>& client_edbs, con
     buffer = client_buffer;
 }
 
-void Server::add_entries(const std::vector<string>& ciphertext) {
-    for (auto i : ciphertext) {
-        buffer.emplace_back(i);
-    }
-}
 
 vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
     vector<string> edb = {};
@@ -111,4 +106,8 @@ void Server::storeEDB(int ind, vector<string>& EDB, vector<string>& stash) {
     }
     EDBs[ind] = edb;
     min = ind;
+}
+
+int Server::getStashSize() {
+    return (int)estash.size();
 }

@@ -3,6 +3,8 @@
 #include "Client.h"
 #include "Utils.h"
 
+using namespace std;
+using namespace cuckoo;
 
 vector<kv> generate_samples(int size) {
 	vector<kv> data(0);
@@ -25,21 +27,43 @@ vector<kv> generate_samples(int size) {
 
 
 int main() {
-	int db_size = 200;
-	float alpha = 0.1;
-	int a = ceil(db_size * 2 * (1 + alpha));
-	//cout << "hash table size:" << a << endl;
+	cout << "Please input the size of the database N." << endl;
+	int db_size = 0;
+	cin >> db_size;
+	cout << "Please input alpha (0<alpha<1)." << endl;
+	float alpha = 0;
+	cin >> alpha;
+
 	Client client(db_size, alpha, (int)(db_size/2));
-	vector<kv> data = generate_samples(db_size);
-	client.setup(data);
-	cout << "setup completed" << endl;
+	vector<kv> dataset = generate_samples(db_size);
+	chrono::high_resolution_clock::time_point time_start, time_end;
+	chrono::microseconds time_diff;
+
+	//Setup
+	time_start = chrono::high_resolution_clock::now();
+	client.setup(dataset);
+	time_end = chrono::high_resolution_clock::now();
+	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
+  int stash_size = client.getStashSize();
+  cout << "Combined Stash size: " << stash_size << endl;
+
+
+	//Search
+	time_start = chrono::high_resolution_clock::now();
 	vector<string> res = client.search("test");
-	cout << "raw search result:" << res.size() << endl;
+	time_end = chrono::high_resolution_clock::now();
+	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+	cout << "Search Done [" << time_diff.count() << " microseconds]" << endl;
+
+	//Remove the dummy entities in raw search results.
 	vector<int> inds = client.process("test", res);
 	cout << "processed search result:" << inds.size() << endl;
-	for (auto ind : inds) {
-		cout << ind << endl;
-	}
+	//for (auto ind : inds) {
+	//	cout << ind << endl;
+	//}
+
+	//Update
 	for(int i = 0; i<8; i++){
 		client.update("new", i, ADD);
 	}
@@ -52,9 +76,9 @@ int main() {
 	inds = client.process("test", res);
 	cout << "processed search result:" << inds.size() << endl;
 	sort(inds.begin(), inds.end());
-	for (auto ind : inds) {
-		cout << ind << endl;
-	}
+	//for (auto ind : inds) {
+	//	cout << ind << endl;
+	//}
 	return 0;
 
 }
