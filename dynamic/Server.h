@@ -48,6 +48,8 @@ public:
     void storeEDB(int ind, vector<string>& EDB, vector<string>& stash);
     
     int getStashSize();
+    int getBufferSize();
+    int getEDBSize(int i);
 };
 
 

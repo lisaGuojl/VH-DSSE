@@ -111,3 +111,11 @@ void Server::storeEDB(int ind, vector<string>& EDB, vector<string>& stash) {
 int Server::getStashSize() {
     return (int)estash.size();
 }
+
+int Server::getBufferSize() {
+    return (int)buffer.size();
+}
+
+int Server::getEDBSize(int i) {
+    return (int)EDBs[i].size();
+}

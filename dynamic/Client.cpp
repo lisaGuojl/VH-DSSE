@@ -282,3 +282,18 @@ int Client::getStashSize() {
 	int res = server->getStashSize();
 	return res;
 }
+
+int Client::getBufferSize() {
+	int res = server->getBufferSize();
+	return res;
+}
+
+int Client::getEDBSize() {
+	int res = 0;
+	for (int i = 0;i < exist.size();i++) {
+		if (exist[i] == true) {
+			res += server->getEDBSize(i);
+		}
+  }
+	return res;
+}

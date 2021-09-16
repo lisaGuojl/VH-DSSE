@@ -52,6 +52,8 @@ public:
 
     vector<int> process(const string& keyword, vector<string> plains);
     int getStashSize();
+    int getBufferSize();
+    int getEDBSize();
 };
 
 
