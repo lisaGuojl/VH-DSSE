@@ -67,7 +67,12 @@ int main() {
 	vector<kv> dataset = generate_samples(db_size, &MAXCOUNT);
 	cout << "maximum response length: " << MAXCOUNT << endl;
 	cout << "------------------------" << endl;
-  Client client(db_size, alpha, MAXCOUNT);
+  cout << " MRL for query test : " << endl;
+	int inputMRL = 0;
+	if ((cin >> inputMRL)) {
+		MAXCOUNT = inputMRL;
+	}
+	Client client(db_size, alpha, MAXCOUNT);
 	chrono::high_resolution_clock::time_point time_start, time_end;
 	chrono::microseconds time_diff;
 
@@ -79,6 +84,8 @@ int main() {
 	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
 	int stash_size = client.getStashSize();
 	cout << "Combined Stash size: " << stash_size << endl;
+  int storage = (client.getStashSize() + client.getBufferSize() + client.getEDBSize()) * sizeof(char) * 17;
+  cout << "Storage : " << (storage / 1024.0 / 1024.0) << " MB" << endl;
 
 
 	//Search
