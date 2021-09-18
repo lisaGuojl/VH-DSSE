@@ -95,6 +95,8 @@ string Client::decrypt(string& cipher, uint8_t* key) {
 }
 
 vector<string> Client::search(const string& keyword) {
+  //chrono::high_resolution_clock::time_point start, end;
+	//chrono::microseconds time_diff;
 	vector<string> results;
 	for (int i = 0;i < exist.size();i++) {
 		if (exist[i] == true) {
@@ -102,29 +104,33 @@ vector<string> Client::search(const string& keyword) {
 			vector<GGMNode> token = {};
 			string seedstr = prf_seeds[i];
 			vector<uint8_t> prf_seed(seedstr.begin(), seedstr.end());
-			token = clienthandler->getToken(keyword, li, &prf_seed[0]);
+      //start = chrono::high_resolution_clock::now();
+	    token = clienthandler->getToken(keyword, li, &prf_seed[0]);
+      //end = chrono::high_resolution_clock::now();
+      //time_diff = chrono::duration_cast<chrono::microseconds>(end - start);
+      //cout<< i << ":" << time_diff.count() << " microseconds]" << endl;
 			vector<string> Xi = server->searchEDB(i, token);
-			for (auto cipher : Xi) {
-				string plain = decrypt(cipher, Kske);
-				results.emplace_back(plain);
-			}
+			//for (auto cipher : Xi) {
+			//	string plain = decrypt(cipher, Kske);
+			//	results.emplace_back(plain);
+			//}
 			Xi.clear();
 		}
 	}
 
 	vector<string> stash = server->searchEstash();
-	for (auto cipher : stash) {
-		string plain = decrypt(cipher, Kstash);
-		results.emplace_back(plain);
-	}
-	stash.clear();
+	//for (auto cipher : stash) {
+	//	string plain = decrypt(cipher, Kstash);
+	//	results.emplace_back(plain);
+	//}
+	//stash.clear();
 
 	vector<string> buf = server->searchBuffer();
-	for (auto cipher : buf) {
-		string plain = decrypt(cipher, Kbuf);
-		results.emplace_back(plain);
-	}
-	buf.clear();
+	//for (auto cipher : buf) {
+	//	string plain = decrypt(cipher, Kbuf);
+	//	results.emplace_back(plain);
+	//}
+	//buf.clear();
 
 	return results;
 }

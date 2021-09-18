@@ -53,6 +53,7 @@ public:
     vector<string> get_estash();
     void update(const string& keyword, int ind, OP op, string& text);
     void upload();
+    vector<GGMNode> getToken_min_coverage(const string& keyword, int length, uint8_t* prf_seed);
     vector<GGMNode> getToken(const string& keyword, int length, uint8_t* prf_seed);
     int addEDB(int size, string& seedstr, vector<string> plains);
 };

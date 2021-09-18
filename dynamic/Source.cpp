@@ -89,35 +89,42 @@ int main() {
 
 
 	//Search
-	time_start = chrono::high_resolution_clock::now();
-	vector<string> res = client.search("test");
-	time_end = chrono::high_resolution_clock::now();
-	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	cout << "Search Done [" << time_diff.count() << " microseconds]" << endl;
+  vector<string> res = client.search("test");
+	int count = 10;
+	chrono::microseconds query_time_sum(0);
+	for (int i = 0; i < count; i++) {
+		time_start = chrono::high_resolution_clock::now();
+		vector<string> res = client.search("test");
+		time_end = chrono::high_resolution_clock::now();
+		query_time_sum += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+	}
+	
+	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
+	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
 
 	//Remove the dummy entities in raw search results.
-	vector<int> inds = client.process("test", res);
-	cout << "processed search result:" << inds.size() << endl;
+	//vector<int> inds = client.process("test", res);
+	//cout << "processed search result:" << inds.size() << endl;
 	//for (auto ind : inds) {
 	//	cout << ind << endl;
 	//}
 
-	//Update
-	for (int i = 0; i < 8; i++) {
-		client.update("new", i, ADD);
-	}
-	for (int i = 0; i < 8; i++) {
-		client.update("test", i, DEL);
-	}
-	res.clear();
-	inds.clear();
-	res = client.search("test");
-	inds = client.process("test", res);
-	cout << "processed search result:" << inds.size() << endl;
-	sort(inds.begin(), inds.end());
-	//for (auto ind : inds) {
-	//	cout << ind << endl;
+	////Update
+	//for (int i = 0; i < 8; i++) {
+	//	client.update("new", i, ADD);
 	//}
+	//for (int i = 0; i < 8; i++) {
+	//	client.update("test", i, DEL);
+	//}
+	//res.clear();
+	//inds.clear();
+	//res = client.search("test");
+	//inds = client.process("test", res);
+	//cout << "processed search result:" << inds.size() << endl;
+	//sort(inds.begin(), inds.end());
+	////for (auto ind : inds) {
+	////	cout << ind << endl;
+	////}
 	return 0;
 
 }

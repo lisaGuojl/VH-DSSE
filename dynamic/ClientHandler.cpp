@@ -99,7 +99,7 @@ vector<string> ClientHandler::get_estash() {
 	return stash;
 }
 
-vector<GGMNode> ClientHandler::getToken(const string& keyword, int l, uint8_t* seed)
+vector<GGMNode> ClientHandler::getToken_min_coverage(const string& keyword, int l, uint8_t* seed)
 {
 	uint8_t* pair = new uint8_t[keyword.length() + 1];
 	//strncpy((char*)pair, keyword.c_str(), keyword.length() + 1);
@@ -129,6 +129,75 @@ vector<GGMNode> ClientHandler::getToken(const string& keyword, int l, uint8_t* s
 
 	}
 
+	return remain_node;
+}
+
+vector<GGMNode> ClientHandler::getToken(const string& keyword, int l, uint8_t* seed) {
+	uint8_t* pair = new uint8_t[keyword.length() + 1];
+	stringcpy((char*)pair, keyword.length() + 1, keyword.c_str());
+
+	// get the predix (the hash value of keyword)
+	uint8_t digest[32] = {};
+	sha256_digest(pair, keyword.length(), digest);
+	uint32_t tag_keyword = digest[4] | (digest[1] << 8);
+
+	vector<GGMNode> remain_node;
+
+	bitset<16> lbits(2 * l - 1);
+	vector<int> zero_list = {};
+	vector<int> one_list = {};
+	bitset<16> tag_ind;
+	bitset<32> tag;
+	for (int i = 0; i < 16;i++) {
+		if (lbits[i] == 0) {
+			zero_list.emplace_back(i);
+		}
+		else {
+			one_list.emplace_back(i);
+		}
+	}
+	
+	int Imax = one_list.back();
+	// l = 2 ^ 15.
+	if (zero_list.size() == 0) {
+		tag = (short int)0 | (tag_keyword << 16);
+		remain_node.emplace_back(GGMNode(tag.to_ulong(), Imax + 1));
+	}
+
+	int Omin = zero_list[0];
+	int Omax = zero_list.back();
+	// l = 2 ^ x
+	if (Omin == Imax + 1) {
+		tag = (short int)0 | (tag_keyword << 16);
+		remain_node.emplace_back(GGMNode(tag.to_ulong(), Imax + 1));
+	}
+	else {
+		for (int ind = Imax; ind > Omin; ind--) {
+			if (lbits[ind] == 1) {
+				tag.reset();
+				tag_ind.reset();
+				for (int iter = 15; iter > ind; iter--) {
+					tag_ind[iter] = lbits[iter];
+				}
+				tag = (short int)(tag_ind.to_ulong()) | (tag_keyword << 16);
+				remain_node.emplace_back(GGMNode(tag.to_ulong(), ind));
+			}
+		}
+		tag.reset();
+		tag.reset();
+		for (int iter = 15; iter > Omin; iter--) {
+			tag_ind[iter] = lbits[iter];
+		}
+		tag = (short int)(tag_ind.to_ulong()) | (tag_keyword << 16);
+		remain_node.emplace_back(GGMNode(tag.to_ulong(), Omin));
+	}
+
+	// compute the key set and send to the server
+	for (auto& i : remain_node) {
+		memcpy(i.digest, seed, 16);
+		GGMTree::derive_key_from_tree(i.digest, i.index, tree->get_level(), i.level);
+	}
+ 
 	return remain_node;
 }
 
