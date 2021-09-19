@@ -96,6 +96,7 @@ int main() {
 		time_start = chrono::high_resolution_clock::now();
 		vector<string> res = client.search("test");
 		time_end = chrono::high_resolution_clock::now();
+    cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << " microseconds]" << endl;
 		query_time_sum += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
 	}
 	

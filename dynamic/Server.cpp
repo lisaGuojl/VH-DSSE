@@ -27,8 +27,8 @@ void Server::storeEDB(const unordered_map<int, vector<string>>& client_edbs, con
 
 
 vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
-    vector<string> edb = {};
-    edb = EDBs[id];
+    vector<string>* edb;
+    edb = &EDBs[id];
     vector<string> results;
     for (GGMNode node : node_list) {
         for (int i = 0; i < pow(2, node.level); ++i) {
@@ -39,10 +39,10 @@ vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
             
             while (true) {
                 uint32_t loc32 = derived_key[0] | (derived_key[1] << 8) | (derived_key[2] << 16) | (derived_key[3] << 24);
-                int length = ceil(log2(edb.size()));
+                int length = ceil(log2(edb->size()));
                 uint32_t loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
-                if (loc < edb.size()) {
-                    results.emplace_back(edb[loc]);
+                if (loc < edb->size()) {
+                    results.emplace_back(edb->at(loc));
                     break;
                 }
                 else {

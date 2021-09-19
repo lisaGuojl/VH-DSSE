@@ -110,27 +110,27 @@ vector<string> Client::search(const string& keyword) {
       //time_diff = chrono::duration_cast<chrono::microseconds>(end - start);
       //cout<< i << ":" << time_diff.count() << " microseconds]" << endl;
 			vector<string> Xi = server->searchEDB(i, token);
-			//for (auto cipher : Xi) {
-			//	string plain = decrypt(cipher, Kske);
-			//	results.emplace_back(plain);
-			//}
+			for (auto cipher : Xi) {
+				string plain = decrypt(cipher, Kske);
+				results.emplace_back(plain);
+			}
 			Xi.clear();
 		}
 	}
 
 	vector<string> stash = server->searchEstash();
-	//for (auto cipher : stash) {
-	//	string plain = decrypt(cipher, Kstash);
-	//	results.emplace_back(plain);
-	//}
-	//stash.clear();
+	for (auto cipher : stash) {
+		string plain = decrypt(cipher, Kstash);
+		results.emplace_back(plain);
+	}
+	stash.clear();
 
 	vector<string> buf = server->searchBuffer();
-	//for (auto cipher : buf) {
-	//	string plain = decrypt(cipher, Kbuf);
-	//	results.emplace_back(plain);
-	//}
-	//buf.clear();
+	for (auto cipher : buf) {
+		string plain = decrypt(cipher, Kbuf);
+		results.emplace_back(plain);
+	}
+	buf.clear();
 
 	return results;
 }
