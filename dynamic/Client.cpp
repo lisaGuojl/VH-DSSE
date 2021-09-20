@@ -35,9 +35,7 @@ Client::~Client() {
 }
 
 void Client::setup(vector<kv> data) {
-  EDBs.clear();
-  ESTASH.clear();
-  EBUF.clear();
+	EDBs.clear();
 	int idx = 0;
 	int logN = floor(log2(N));
 	int min = floor(log2(logN));
@@ -48,7 +46,7 @@ void Client::setup(vector<kv> data) {
 			exist[i] = true;
 			vector<kv> db(data.begin() + idx, data.begin() + idx + (int)(1 << i));
 			int stash_len = clienthandler->setup((int)1 << i, prf_seeds[i], db);
-			EDBs[i] = clienthandler->get_edb();
+			EDBs.emplace_back(make_pair(i, clienthandler->get_edb()));
 			if (stash_len>0) {
 				vector<string> estash = clienthandler->get_estash();
 				for (string stash : estash) {
@@ -72,7 +70,7 @@ void Client::setup(vector<kv> data) {
 
 		}
 	}
-	server->storeEDB(EDBs, ESTASH, EBUF, min);
+	server->storeEDB(EDBs, ESTASH, EBUF, min, logN);
 	EBUF.clear();
 	ESTASH.clear();
 	EDBs.clear();

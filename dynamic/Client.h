@@ -31,7 +31,7 @@ private:
     GGMTree* tree;
     std::vector<string> ESTASH;
     std::vector<string> EBUF;
-    std::unordered_map<int, vector<string>> EDBs;
+    vector<pair<int, vector<string>>> EDBs;
     vector<bool> exist;
     int MIN;    
 

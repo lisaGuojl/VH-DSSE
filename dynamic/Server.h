@@ -14,7 +14,7 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
-
+#include <queue>
 #include "Utils.h"
 
 #include "GGMTree.h"
@@ -27,7 +27,7 @@ using namespace cuckoo;
 class Server {
 private:
     vector<string> buffer;
-    unordered_map<int, vector<string>> EDBs;
+    vector<vector<string>> EDBs;
     vector<string> estash;
     uint32_t edb_size;
     int min;
@@ -38,7 +38,7 @@ public:
     Server();
     ~Server();
 
-    void storeEDB(const unordered_map<int, vector<string>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& buffer, int min_value);
+    void storeEDB(const vector<pair<int, vector<string>>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& buffer, int min_value, int logN);
     vector<string> searchEDB(int id, const vector<GGMNode>& node_list);
     vector<string> searchEstash();
     vector<string> searchBuffer();

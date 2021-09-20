@@ -5,16 +5,20 @@ Server::Server() {
 }
 
 Server::~Server() {
-    //table->clear_table();
+    
     EDBs.clear();
     estash.clear();
     buffer.clear();
 }
 
-void Server::storeEDB(const unordered_map<int, vector<string>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& client_buffer, int min_value) {
-    min = min_value;
+void Server::storeEDB(const vector<pair<int, vector<string>>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& client_buffer, int min_value, int logN) {
     EDBs.clear();
-    EDBs = client_edbs;
+    EDBs.resize(logN+1);
+    min = min_value;
+    for (auto pair : client_edbs) {
+        EDBs[pair.first].assign(pair.second.begin(), pair.second.end());
+    }
+   
 
     estash.clear();
     for (auto i : stash) {
@@ -27,18 +31,43 @@ void Server::storeEDB(const unordered_map<int, vector<string>>& client_edbs, con
 
 
 vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
+    chrono::high_resolution_clock::time_point time_start, time_end;
+    chrono::microseconds time_diff;
+    time_start = chrono::high_resolution_clock::now();
+	
+	
     vector<string>* edb;
     edb = &EDBs[id];
+    
+    time_end = chrono::high_resolution_clock::now();
+    time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+    cout << "1:"<< time_diff.count() << " microseconds]" << endl;
     vector<string> results;
-    for (GGMNode node : node_list) {
-        for (int i = 0; i < pow(2, node.level); ++i) {
-            int offset = (node.index) + i;
-            uint8_t derived_key[16];
-            memcpy(derived_key, node.digest, 16);
-            GGMTree::derive_key_from_tree(derived_key, offset, node.level, 0);
-            
-            while (true) {
-                uint32_t loc32 = derived_key[0] | (derived_key[1] << 8) | (derived_key[2] << 16) | (derived_key[3] << 24);
+    
+    for (GGMNode n : node_list) {
+        std::queue<GGMNode> internal_nodes;
+	internal_nodes.push(n);
+        int level = n.level;
+	while (level > 0){
+		GGMNode node = internal_nodes.front();
+		//bitset<32> bits(node.index);
+		//cout << bits <<endl;
+		internal_nodes.pop();
+		uint8_t derived_key[16];
+		memcpy(derived_key, node.digest, 16);
+    		GGMTree::derive_key_from_tree(derived_key, node.index, node.level, node.level-1);
+    		internal_nodes.push(GGMNode(node.index, node.level - 1, derived_key));
+
+	    	memcpy(derived_key, node.digest, 16);
+    		GGMTree::derive_key_from_tree(derived_key, node.index+ pow(2, node.level - 1), node.level, node.level-1);
+    		internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
+    		level = internal_nodes.front().level;
+	}
+        while (internal_nodes.empty()) {
+	    GGMNode node = internal_nodes.front();
+	    internal_nodes.pop();
+	    while (true) {
+                uint32_t loc32 = node.digest[0] | (node.digest[1] << 8) | (node.digest[2] << 16) | (node.digest[3] << 24);
                 int length = ceil(log2(edb->size()));
                 uint32_t loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
                 if (loc < edb->size()) {
@@ -47,13 +76,15 @@ vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
                 }
                 else {
                     uint8_t digest[32] = {};
-                    sha256_digest(derived_key, 16, digest);
-                    memcpy(derived_key, digest, 16);
+                    sha256_digest(node.digest, 16, digest);
+                    memcpy(node.digest, digest, 16);
                 }
             }
-
         }
+
     }
+
+
     return results;
 }
 
@@ -71,19 +102,17 @@ bool Server::update(string ct) {
     if (buffer.size() == (int)(1 << (min + 1))) {
         return false;
     }
-    else {
-        return true;
-    }
+    return true;
+    
 }
 
 vector<pair<int, vector<string>>> Server::updateDB() {
     int i = min;
     vector<pair<int, vector<string>>> res;
     while (true) {
-        auto it = EDBs.find(i);
-        if ( it != EDBs.end()) {
+        if (EDBs.empty() != 1 && EDBs[i].size() != 0) {
             res.emplace_back(make_pair(i, EDBs[i]));
-            it = EDBs.erase(it);
+            EDBs[i] = {};
             i++;
         }
         else {
@@ -119,3 +148,4 @@ int Server::getBufferSize() {
 int Server::getEDBSize(int i) {
     return (int)EDBs[i].size();
 }
+
