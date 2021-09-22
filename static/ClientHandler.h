@@ -9,10 +9,27 @@
 #include "cuckoo.h"
 
 #include "ServerHandler.h"
+
+#ifdef _WIN32
+#define stringcpy(destination, length, source) strcpy_s(destination, length, source)
+#else
+#define stringcpy(destination, length, source) strncpy(destination, source, length)
+#endif
+
+
 using namespace cuckoo;
 
+
+
 enum OP {
-    INS, DEL
+    ADD, DEL
+};
+
+struct kv {
+    string keyword;
+    int ind;
+    OP op;
+    string text;
 };
 
 class ClientHandler {
@@ -20,13 +37,14 @@ private:
     uint8_t* key = (unsigned char*)"0123456789123456";
     uint8_t* iv = (unsigned char*)"0123456789123456";
     uint8_t* prf_seed = (unsigned char*)"0123456789123456";
-
+    float alpha;
 
     GGMTree* tree;
     KukuTable* table;
     std::vector<string> stash;
     std::vector<string> edb;
-    uint32_t table_size;
+    int table_size;
+    int stash_len;
   
 
     ServerHandler* server;
@@ -35,10 +53,11 @@ private:
 public:
     ClientHandler(int size, float alpha);
     ~ClientHandler();
-    int stash_len;
     unsigned long get_index(const string& keyword, unsigned short ind);
-    void update(const string& keyword, int ind, string& text);
+    void update(const string& keyword, int ind, OP op, string& input_text);
     void upload();
+    int setup(vector<kv> db);
+    vector<GGMNode> getToken(const string& keyword, int length);
     vector<string> search(const string& keyword, int length);
 };
 

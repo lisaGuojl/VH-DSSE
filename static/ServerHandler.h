@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-
+#include <queue>
 #include "Utils.h"
 
 #include "GGMTree.h"

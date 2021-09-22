@@ -34,13 +34,5 @@ unsigned int key_derivation(unsigned char* plaintext, int plaintext_len,
     unsigned char* key, int key_len,
     unsigned char* digest);
 
-//std::string uint82hex(const uint8_t* data, int data_length) {
-//    std::stringstream ss;
-//    ss << std::hex << std::setfill('0');
-//    for (int i = 0; i < data_length; ++i)
-//        ss << std::setw(2) << static_cast<unsigned>(data[i]);
-//    std::string mystr = ss.str();
-//    return mystr;
-//}
 
 #endif
