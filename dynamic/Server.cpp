@@ -30,18 +30,10 @@ void Server::storeEDB(const vector<pair<int, vector<string>>>& client_edbs, cons
 }
 
 
-vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
-    chrono::high_resolution_clock::time_point time_start, time_end;
-    chrono::microseconds time_diff;
-    time_start = chrono::high_resolution_clock::now();
-	
-	
+vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {	
     vector<string>* edb;
     edb = &EDBs[id];
     
-    time_end = chrono::high_resolution_clock::now();
-    time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-    cout << "1:"<< time_diff.count() << " microseconds]" << endl;
     vector<string> results;
     
     for (GGMNode n : node_list) {
@@ -99,7 +91,7 @@ vector<string> Server::searchBuffer() {
 
 bool Server::update(string ct) {
     buffer.emplace_back(ct);
-    if (buffer.size() == (int)(1 << (min + 1))) {
+    if (buffer.size() == (int)(1 << (min +1))) {
         return false;
     }
     return true;
@@ -108,11 +100,11 @@ bool Server::update(string ct) {
 
 vector<pair<int, vector<string>>> Server::updateDB() {
     int i = min;
-    vector<pair<int, vector<string>>> res;
+    vector<pair<int, vector<string>>> res={};
     while (true) {
         if (EDBs.empty() != 1 && EDBs[i].size() != 0) {
             res.emplace_back(make_pair(i, EDBs[i]));
-            EDBs[i] = {};
+            EDBs[i].clear();
             i++;
         }
         else {
@@ -129,12 +121,18 @@ void Server::storeEDB(int ind, vector<string>& EDB, vector<string>& stash) {
     for (auto i : stash) {
         estash.emplace_back(i);
     }
-    vector<string> edb = {};
-    for (auto i : EDB) {
-        edb.emplace_back(i);
+    if (ind > EDBs.size()) {
+	cout << "new!"<<endl;
+	vector<string> edb = {};
+    	for (auto i : EDB) {
+        	edb.emplace_back(i);
+    	}
+	EDBs.push_back(edb);
     }
-    EDBs[ind] = edb;
-    min = ind;
+    else {
+	EDBs[ind].assign(EDB.begin(), EDB.end());
+    }
+    //min = ind;
 }
 
 int Server::getStashSize() {

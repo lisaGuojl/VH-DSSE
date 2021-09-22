@@ -30,7 +30,8 @@ struct kv {
 
 class ClientHandler {
 private:
-    uint8_t* key = (unsigned char*)"7891234560123456";
+    uint8_t* Kstash = (unsigned char*)"7891234560123456"; 
+    uint8_t* Kske = (unsigned char*)"7891234560123456";
     uint8_t* iv = (unsigned char*)"0123456789123456";
     uint8_t* prf_seed = (unsigned char*)"0123456789123456";
 

@@ -89,7 +89,7 @@ int main() {
 
 
 	//Search
-  vector<string> res = client.search("test");
+	 vector<string> res = client.search("test");
 	int count = 10;
 	chrono::microseconds query_time_sum(0);
 	for (int i = 0; i < count; i++) {
@@ -104,17 +104,30 @@ int main() {
 	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
 
 	//Remove the dummy entities in raw search results.
-	//vector<int> inds = client.process("test", res);
-	//cout << "processed search result:" << inds.size() << endl;
+	vector<int> inds = client.process("test", res);
+	cout << "processed search result:" << inds.size() << endl;
 	//for (auto ind : inds) {
 	//	cout << ind << endl;
 	//}
 
-	////Update
-	//for (int i = 0; i < 8; i++) {
-	//	client.update("new", i, ADD);
+	//Update
+
+	for (int i = 0; i < 500; i++) {
+		//cout << i<<":";  
+		time_start = chrono::high_resolution_clock::now();
+		client.update("new", i, ADD);
+		time_end = chrono::high_resolution_clock::now();
+		cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << ", ";
+	}
+
+	//for (int i = 0; i < 500; i++) {
+	//	time_start = chrono::high_resolution_clock::now();
+	//	client.update("update", i, ADD);
+	//	time_end = chrono::high_resolution_clock::now();
+	//	cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << ", ";
 	//}
-	//for (int i = 0; i < 8; i++) {
+	//cout << endl;
+        //for (int i = 0; i < 8; i++) {
 	//	client.update("test", i, DEL);
 	//}
 	//res.clear();
@@ -129,5 +142,3 @@ int main() {
 	return 0;
 
 }
-
-

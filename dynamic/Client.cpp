@@ -163,7 +163,6 @@ void Client::updateDB() {
 	vector<string> buf = server->searchBuffer();
 	vector<string> stash = server->searchEstash();
 	vector<pair<int, vector<string>>> edbs = server->updateDB();
-
 	vector<string> plains = {};
 	for (auto cipher : stash) {
 		string plain = decrypt(cipher, Kstash);
@@ -211,21 +210,27 @@ void Client::updateDB() {
         	}
 	}
 	
-	MIN = MIN+1;
-	exist[MIN] = true;
+	//MIN = MIN+1;
+	//exist[MIN] = true;
+	int size = MIN;
+        if (edbs.size()!=0){
+                size = edbs.back().first + 1;
+        }
 	plains.insert(plains.end(), bufplain.begin(), bufplain.end());
-	int stash_len = clienthandler->addEDB((int)(1 << MIN), prf_seeds[MIN], plains);
+	int stash_len = clienthandler->addEDB((int)(1 << size), prf_seeds[size], plains);
 	vector<string> EDB = clienthandler->get_edb();
 	if (stash_len > 0) {
-		vector<string> estash = clienthandler->get_estash();
-		for (string stash : estash) {
-			ESTASH.emplace_back(stash);
-		}
+		vector<string> new_estash = clienthandler->get_estash();
+		ESTASH.assign(new_estash.begin(), new_estash.end());
 	}
-	server->storeEDB(MIN, EDB, ESTASH);
+	server->storeEDB(size, EDB, ESTASH);
 	for (auto pair : edbs) {
 		exist[pair.first] = false;
 	}
+	exist[size] = true;
+	buf.clear();
+	stash.clear();
+	plains.clear();
 }
 
 

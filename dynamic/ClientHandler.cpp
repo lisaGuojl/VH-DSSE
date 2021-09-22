@@ -59,7 +59,7 @@ void ClientHandler::upload() {
 		stringcpy((char*)data, plain.length() + 1, plain.c_str());
 		int ciphertext_len = 0;
 		unsigned char ciphertext[100] = {};
-		ciphertext_len = aes_encrypt(data, plain.length(), key, iv, ciphertext);
+		ciphertext_len = aes_encrypt(data, plain.length(), Kske, iv, ciphertext);
 		//table->insert_by_loc((location_type)(i), reinterpret_cast<char*>(ciphertext));
 		edb.push_back(string((char*)ciphertext, ciphertext_len));
 	}
@@ -69,7 +69,7 @@ void ClientHandler::upload() {
 		stringcpy((char*)data, stash[j].length() + 1, stash[j].c_str());
 		int ciphertext_len = 0;
 		unsigned char ciphertext[100] = {};
-		ciphertext_len = aes_encrypt(data, stash[j].length(), key, iv, ciphertext);
+		ciphertext_len = aes_encrypt(data, stash[j].length(), Kstash, iv, ciphertext);
 		stash[j] = string((char*)ciphertext, ciphertext_len);
 	}
 }
@@ -205,11 +205,12 @@ int ClientHandler::addEDB(int size, string& seedstr, vector<string> plains)
 {
 	stash_len = 0;
 	stash.clear();
+	edb.clear();
 	vector<uint8_t> seed(seedstr.begin(), seedstr.end());
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	table = new KukuTable(table_size, 0, 1, empty_item, prf_seed);
+	table = new KukuTable(table_size, 0, 100, empty_item, prf_seed);
 	for (auto plain : plains) {
 		if (plain.length() == 0) {
 			continue;
