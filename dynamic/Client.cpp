@@ -93,8 +93,6 @@ string Client::decrypt(string& cipher, uint8_t* key) {
 }
 
 vector<string> Client::search(const string& keyword) {
-  //chrono::high_resolution_clock::time_point start, end;
-	//chrono::microseconds time_diff;
 	vector<string> results;
 	for (int i = 0;i < exist.size();i++) {
 		if (exist[i] == true) {
@@ -102,11 +100,7 @@ vector<string> Client::search(const string& keyword) {
 			vector<GGMNode> token = {};
 			string seedstr = prf_seeds[i];
 			vector<uint8_t> prf_seed(seedstr.begin(), seedstr.end());
-      //start = chrono::high_resolution_clock::now();
-	    token = clienthandler->getToken(keyword, li, &prf_seed[0]);
-      //end = chrono::high_resolution_clock::now();
-      //time_diff = chrono::duration_cast<chrono::microseconds>(end - start);
-      //cout<< i << ":" << time_diff.count() << " microseconds]" << endl;
+	    		token = clienthandler->getToken(keyword, li, &prf_seed[0]);
 			vector<string> Xi = server->searchEDB(i, token);
 			for (auto cipher : Xi) {
 				string plain = decrypt(cipher, Kske);

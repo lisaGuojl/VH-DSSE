@@ -3,7 +3,7 @@
 #include <iostream>
 #include "ClientHandler.h"
 #include "Utils.h"
-
+#include <unistd.h>
 
 using namespace std;
 using namespace cuckoo;
@@ -90,6 +90,7 @@ int main() {
 
 	//Search
 	vector<string> res = client.search("test", MAXCOUNT);
+  //sleep(3);
 	int count = 10;
 	chrono::microseconds query_time_sum(0);
   client.search("test", MAXCOUNT);
@@ -103,6 +104,7 @@ int main() {
 
 	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
 	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
+  cout << res.size() <<endl;
 
 	return 0;
 

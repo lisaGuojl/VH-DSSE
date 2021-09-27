@@ -55,7 +55,7 @@ vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
     		internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
     		level = internal_nodes.front().level;
 	}
-        while (internal_nodes.empty()) {
+	while (!internal_nodes.empty()) {
 	    GGMNode node = internal_nodes.front();
 	    internal_nodes.pop();
 	    while (true) {
@@ -75,8 +75,6 @@ vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
         }
 
     }
-
-
     return results;
 }
 
@@ -91,7 +89,7 @@ vector<string> Server::searchBuffer() {
 
 bool Server::update(string ct) {
     buffer.emplace_back(ct);
-    if (buffer.size() == (int)(1 << (min +1))) {
+    if (buffer.size() == (int)(1 << (min))) {
         return false;
     }
     return true;

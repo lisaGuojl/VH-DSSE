@@ -83,7 +83,8 @@ int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	table = new KukuTable(table_size, 0, 50, empty_item, prf_seed);
+  int eviction = 5 * log(size);
+	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
 	for (kv item : db) {
 		update(item.keyword, item.ind, item.op, item.text);
 	}
@@ -210,7 +211,8 @@ int ClientHandler::addEDB(int size, string& seedstr, vector<string> plains)
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	table = new KukuTable(table_size, 0, 100, empty_item, prf_seed);
+  int eviction = 5 * log(size);
+	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
 	for (auto plain : plains) {
 		if (plain.length() == 0) {
 			continue;

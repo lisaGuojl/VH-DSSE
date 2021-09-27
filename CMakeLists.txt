@@ -14,9 +14,10 @@ INCLUDE_DIRECTORIES(. dynamic static)
 
 # set executable outputs
 
-ADD_EXECUTABLE(StaticTest static/main.cpp static/ClientHandler.cpp static/ServerHandler.cpp static/cuckoo.cpp static/GGMTree.cpp static/Utils.cpp)
+ADD_EXECUTABLE(StaticTest static/Source.cpp static/ClientHandler.cpp static/ServerHandler.cpp static/cuckoo.cpp static/GGMTree.cpp static/Utils.cpp)
 ADD_EXECUTABLE(DynamicTest dynamic/Source.cpp dynamic/Client.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp dynamic/cuckoo.cpp dynamic/GGMTree.cpp dynamic/Utils.cpp)
-
+ADD_EXECUTABLE(DynamicAccuracyTest dynamic/accuracytest.cpp dynamic/Client.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp dynamic/cuckoo.cpp dynamic/GGMTree.cpp dynamic/Utils.cpp)
 # link
 TARGET_LINK_LIBRARIES(StaticTest OpenSSL::Crypto)
 TARGET_LINK_LIBRARIES(DynamicTest OpenSSL::Crypto)
+TARGET_LINK_LIBRARIES(DynamicAccuracyTest OpenSSL::Crypto)

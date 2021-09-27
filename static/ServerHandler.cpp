@@ -49,7 +49,7 @@ vector<string> ServerHandler::search(const vector<GGMNode>& node_list) {
             internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
             level = internal_nodes.front().level;
         }
-        while (internal_nodes.empty()) {
+        while (!internal_nodes.empty()) {
             GGMNode node = internal_nodes.front();
             internal_nodes.pop();
             while (true) {
