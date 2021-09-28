@@ -180,6 +180,7 @@ int main() {
 		count += 1;
 	}
 	cout << "Search done" << endl;
+ cout << "------------------------" << endl;
 	for (auto data : ADDdata) {
 		client.update(data.keyword, data.ind, ADD);
 	}
@@ -199,14 +200,13 @@ int main() {
 		cout << "FN rate: " << 100.0 * (first4[count].second - inds.size()) / first4[count].second << "%" << endl;
 		count += 1;
 	}
-
+  cout << "------------------------" << endl;
 	/*for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < floor(first4[i].second * 0.1); j++) {
 			client.update(first4[i].first, j, DEL);
 		}
 	}*/
 	dataset.insert(dataset.end(), ADDdata.begin(), ADDdata.end());
-	cout << dataset.size() << endl;
 	vector<vector<int>> delitems;
 	delitems.resize(4);
 	int sum = 0;

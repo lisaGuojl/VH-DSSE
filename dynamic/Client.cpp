@@ -305,7 +305,7 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 
 	}
 	sort(results.begin(), results.end());
-	cout << "del items: " << delitems.size() << endl;
+
 
 	results.erase(unique(results.begin(), results.end()), results.end());
 	for (auto delitem : delitems) {
