@@ -7,6 +7,8 @@
 using namespace std;
 
 vector<pair<string, int>> first4 = {};
+vector<kv> ADDdata(0);
+
 std::string random_string(std::size_t length)
 {
 	static const std::string alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -49,7 +51,12 @@ vector<kv> generate_samples(int size, int* p) {
 			sample.op = ADD;
 			string id = std::to_string(j);
 			sample.text = keywords[i] + id + "ADD";
-			data.emplace_back(sample);
+			if (i < 4 && j > ceil(counts[i] * 0.95)) {
+				ADDdata.emplace_back(sample);
+			}
+			else{
+				data.emplace_back(sample);
+			}			
 		}
 	}
 	random_shuffle (data.begin(), data.end());
@@ -98,7 +105,7 @@ vector<kv> Zipf(int num_word, int size, int* p) {
 
 	for (int i = 0;i < num_word; i++) {
 		cout << keywords[i] << " : " << counts[i] << endl;
-		for (int j = 0; j < counts[i];j++) {
+		for (int j = 0; j < counts[i]; j++) {
 			kv sample;
 			sample.keyword = keywords[i];
 			sample.ind = j;
@@ -109,7 +116,8 @@ vector<kv> Zipf(int num_word, int size, int* p) {
 		}
 	}
 
-	random_shuffle(data.begin(), data.end(), myrandom);
+	random_shuffle(data.begin(), data.end());
+	random_shuffle(ADDdata.begin(), ADDdata.end())
 	return data;
 }
 
@@ -129,7 +137,7 @@ int main() {
 	vector<kv> dataset = Zipf(num_keywords, db_size, &MAXCOUNT);
 	cout << "maximum response length: " << MAXCOUNT << endl;
 	cout << "------------------------" << endl;
-	db_size = dataset.size();
+	//db_size = dataset.size();
 	Client client(db_size, alpha, MAXCOUNT);
 	chrono::high_resolution_clock::time_point time_start, time_end;
 	chrono::microseconds time_diff;
@@ -157,12 +165,33 @@ int main() {
 		cin >> keyword;
 		vector<string> res = client.search(keyword);
 
-		cout << res.size() << endl;
+		cout << "number of results getting from server: " << res.size() << endl;
 		//Remove the dummy entities in raw search results.
 		vector<int> inds = client.process(keyword, res);
 		cout << "processed search result:" << inds.size() << endl;
     count -= 1;
 	}
+
+	for (auto data : ADDdata){
+		client.update(data.keyword, data.ind, ADD);
+	}
+
+	int count = 4;
+	while (count > 0) {
+		cout << "Please input a keyword." << endl;
+		string keyword;
+		cin >> keyword;
+		vector<string> res = client.search(keyword);
+
+		cout << "number of results getting from server: " << res.size() << endl;
+		//Remove the dummy entities in raw search results.
+		vector<int> inds = client.process(keyword, res);
+		cout << "processed search result:" << inds.size() << endl;
+    count -= 1;
+	}
+
+	
+
 	//for (auto ind : inds) {
 	//	cout << ind << endl;
 	//}

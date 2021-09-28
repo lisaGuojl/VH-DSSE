@@ -16,7 +16,7 @@ Client::Client(int size, float a, int mrl) {
 
 	uint8_t base[16] = {};
 	memcpy(base, seed, 16);
-	for (int i = 0; i <= 100; i++) {
+	for (int i = 0; i <= floor(log2(N)); i++) {
 		uint8_t prf_seed[16] = {};
 		md5_digest(base, 16, prf_seed);
 		std::string str(prf_seed, prf_seed + 16);
@@ -93,6 +93,8 @@ string Client::decrypt(string& cipher, uint8_t* key) {
 }
 
 vector<string> Client::search(const string& keyword) {
+  //chrono::high_resolution_clock::time_point start, end;
+	//chrono::microseconds time_diff;
 	vector<string> results;
 	for (int i = 0;i < exist.size();i++) {
 		if (exist[i] == true) {
@@ -100,7 +102,11 @@ vector<string> Client::search(const string& keyword) {
 			vector<GGMNode> token = {};
 			string seedstr = prf_seeds[i];
 			vector<uint8_t> prf_seed(seedstr.begin(), seedstr.end());
-	    		token = clienthandler->getToken(keyword, li, &prf_seed[0]);
+      //start = chrono::high_resolution_clock::now();
+	    token = clienthandler->getToken(keyword, li, &prf_seed[0]);
+      //end = chrono::high_resolution_clock::now();
+      //time_diff = chrono::duration_cast<chrono::microseconds>(end - start);
+      //cout<< i << ":" << time_diff.count() << " microseconds]" << endl;
 			vector<string> Xi = server->searchEDB(i, token);
 			for (auto cipher : Xi) {
 				string plain = decrypt(cipher, Kske);
@@ -157,6 +163,7 @@ void Client::updateDB() {
 	vector<string> buf = server->searchBuffer();
 	vector<string> stash = server->searchEstash();
 	vector<pair<int, vector<string>>> edbs = server->updateDB();
+
 	vector<string> plains = {};
 	for (auto cipher : stash) {
 		string plain = decrypt(cipher, Kstash);
@@ -204,34 +211,21 @@ void Client::updateDB() {
         	}
 	}
 	
-	//MIN = MIN+1;
-	//exist[MIN] = true;
-	int size = MIN;
-        if (edbs.size()!=0){
-                size = edbs.back().first + 1;
-        }
-
+	MIN = MIN+1;
+	exist[MIN] = true;
 	plains.insert(plains.end(), bufplain.begin(), bufplain.end());
-	int stash_len = clienthandler->addEDB((int)(1 << size), prf_seeds[size], plains);
+	int stash_len = clienthandler->addEDB((int)(1 << MIN), prf_seeds[MIN], plains);
 	vector<string> EDB = clienthandler->get_edb();
 	if (stash_len > 0) {
-		vector<string> new_estash = clienthandler->get_estash();
-		ESTASH.assign(new_estash.begin(), new_estash.end());
+		vector<string> estash = clienthandler->get_estash();
+		for (string stash : estash) {
+			ESTASH.emplace_back(stash);
+		}
 	}
-	server->storeEDB(size, EDB, ESTASH);
+	server->storeEDB(MIN, EDB, ESTASH);
 	for (auto pair : edbs) {
 		exist[pair.first] = false;
 	}
-  if (size > floor(log2(N))) {
-    MIN = floor(log2(size));
-    exist.emplace_back(true);
-  }
-  else {
-    exist[size] = true;
-  }
-	buf.clear();
-	stash.clear();
-	plains.clear();
 }
 
 
@@ -240,7 +234,7 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 	stringcpy((char*)pair, keyword.length() + 1, keyword.c_str());
 	uint8_t digest[32] = {};
 	sha256_digest(pair, keyword.length(), digest);
-	unsigned long tag = digest[4] | (digest[1] << 8);
+	int tag = digest[4] | (digest[1] << 8);
 
 	vector<int> results;
 	vector<int> delitems;
@@ -249,14 +243,17 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 		if (plain == "NULL") {
 			continue;
 		}
+		if (plain.length() == 0) {
+			continue;
+		}
 		string result = plain.substr(0, plain.length() - 1);
-		unsigned int index = stoul(result, nullptr, 0);
+		int index = stoul(result, nullptr, 0);
 		bitset<32> bits(index);
 		bitset<16> tagbits;
 		for (int i = 0; i < 16;i++) {
 			tagbits[i] = bits[i + 16];
 		}
-		if (tagbits.to_ulong() == tag) {
+		if ((int)(tagbits.to_ulong()) == tag) {
 			bitset<15> indbits;
 			for (int i = 0; i < 15;i++) {
 				indbits[i] = bits[i + 1];
@@ -272,8 +269,6 @@ vector<int> Client::process(const string& keyword, vector<string> plains) {
 		
 	}
 	sort(results.begin(), results.end());
-  cout << "del items: " << delitems.size() << endl;
-
 	results.erase(unique(results.begin(), results.end()), results.end());
 	for (auto delitem : delitems) {
 		for (vector<int>::const_iterator iter = results.begin(); iter != results.end(); iter++) {

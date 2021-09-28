@@ -194,7 +194,7 @@ namespace cuckoo {
                 }
                 else {
                     uint8_t digest[32] = {};
-                    sha256_digest(derived_key, 16, digest);
+                    sha256_digest(derived_key, 32, digest);
                     memcpy(derived_key, digest, 16);
                 }
             }

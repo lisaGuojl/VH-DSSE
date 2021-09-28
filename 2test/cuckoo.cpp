@@ -43,7 +43,7 @@ namespace cuckoo
         while (level--)
         { 
             unsigned long index = item.first;
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 2; ++i) {
                 location_type loc = location(index, i);
                 if (loc == table_size_) {
                     return false;
