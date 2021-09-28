@@ -33,14 +33,14 @@ private:
     std::vector<string> EBUF;
     vector<pair<int, vector<string>>> EDBs;
     vector<bool> exist;
-    int MIN;    
+    int MIN;
 
     ClientHandler* clienthandler;
     Server* server;
 
 
     string decrypt(string& cipher, uint8_t* key);
-    
+    void processDB(vector<kv>* data);
     void updateDB();
 
 public:

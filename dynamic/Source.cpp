@@ -1,236 +1,152 @@
-﻿
-#include <iostream>
-#include "Client.h"
-#include "Utils.h"
-#include <ctime>        // std::time
-#include <cstdlib>
-using namespace std;
+﻿#include "Server.h"
 
+Server::Server() {
 
-std::string random_string(std::size_t length)
-{
-	static const std::string alphabet = "abcdefghijklmnopqrstuvwxyz";
-	static std::default_random_engine rng(std::time(nullptr));
-	static std::uniform_int_distribution<std::size_t> distribution(0, alphabet.size() - 1);
-
-	std::string str;
-	while (str.size() < length) str += alphabet[distribution(rng)];
-	return str;
 }
 
-vector<kv> generate_samples(int size, int* p) {
-	vector<kv> data(0);
-	vector<string> keywords = { "test" };
-	vector<int> counts = { 50 };
-	int total = counts[0];
+Server::~Server() {
 
-	srand(time(NULL));
-	while (total < size) {
-		int num = 0;
-		num = rand() % (1 << 15) + 1;
-		if (total + num > size) {
-			num = size - total;
-		}
-		counts.emplace_back(num);
-		string keyword = random_string(5);
-		keywords.emplace_back(keyword);
-		total += num;
-	}
-	auto it = max_element(std::begin(counts), std::end(counts));
-	*p = *it;
-
-	for (int i = 0;i < keywords.size(); i++) {
-		cout << keywords[i] << " : " << counts[i] << endl;
-		for (int j = 0; j < counts[i];j++) {
-			kv sample;
-			sample.keyword = keywords[i];
-			sample.ind = j;
-			sample.op = ADD;
-			string id = std::to_string(j);
-			sample.text = keywords[i] + id + "ADD";
-			data.emplace_back(sample);
-		}
-	}
-	random_shuffle (data.begin(), data.end());
-	//for(auto d:data){
-	//	cout<<d.keyword<<endl;
-	//}
-	return data;
+    EDBs.clear();
+    estash.clear();
+    buffer.clear();
 }
 
-int myrandom (int i) { return std::rand()%i;}
-
-
-vector<kv> Zipf(int num_word, int size, int* p) {
-	float sum = 0.0;
-	for (int i = 1; i <= num_word; i++) {
-		sum += 1.0 / i;
-	}
-
-	vector<string> keywords = { "test", "sse", "dynamic", "static" };
-	for (int i = 4; i < num_word; i++) {
-		string keyword = random_string(5);
-		keywords.emplace_back(keyword);
-	}
-
-	vector<int> counts = {};
-	int count = 0;
-	for (int i = 1; i <= num_word; i++) {
-		if (i == num_word) {
-			int num = size - count;
-      counts.emplace_back(num);
-		  count += num;
-		}
-		int num = floor(1.0 / i / sum * size);
-		counts.emplace_back(num);
-		count += num;
-	}
- 	auto it = max_element(std::begin(counts), std::end(counts));
-	*p = *it;
- 
-	srand(unsigned(time(0)));
-
-	vector<kv> data = {};
-
-	for (int i = 0;i < num_word; i++) {
-		cout << keywords[i] << " : " << counts[i] << endl;
-		for (int j = 0; j < counts[i];j++) {
-			kv sample;
-			sample.keyword = keywords[i];
-			sample.ind = j;
-			sample.op = ADD;
-			string id = std::to_string(j);
-			sample.text = keywords[i] + id + "ADD";
-			data.emplace_back(sample);
-		}
-	}
-
-	//random_shuffle(data.begin(), data.end());
-	//for (auto d : data) {
-	//	cout << d.keyword << endl;
-	//}
-	return data;
-}
-
-int main() {
-	cout << "Please input the size of the database N." << endl;
-	int db_size = 0;
-	cin >> db_size;
-	cout << "Please input alpha (0<alpha<1)." << endl;
-	float alpha = 0;
-	cin >> alpha;
-	int MAXCOUNT = 0;
-	cout << "------------------------" << endl;
-	cout << "keywords and counts: " << endl;
-	vector<kv> dataset = generate_samples(db_size, &MAXCOUNT);
-	cout << "maximum response length: " << MAXCOUNT << endl;
-	cout << "------------------------" << endl;
-	cout << " MRL for query test : " << endl;
-	int inputMRL = 0;
-	if ((cin >> inputMRL)) {
-		MAXCOUNT = inputMRL;
-	}
-	Client client(db_size, alpha, MAXCOUNT);
-	chrono::high_resolution_clock::time_point time_start, time_end;
-	chrono::microseconds time_diff;
-
-	//Setup
-	time_start = chrono::high_resolution_clock::now();
-	client.setup(dataset);
-	time_end = chrono::high_resolution_clock::now();
-	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
-	int stash_size = client.getStashSize();
-	cout << "Combined Stash size: " << stash_size << endl;
-	int storage = (client.getStashSize() + client.getBufferSize() + client.getEDBSize()) * sizeof(char) * 17;
-	cout << "Storage : " << (storage / 1024.0 / 1024.0) << " MB" << endl;
-
-
-	//Search
-	vector<string> res = client.search("test");
-  
-	int count = 10;
-	chrono::microseconds query_time_sum(0);
-	for (int i = 0; i < count; i++) {
-		time_start = chrono::high_resolution_clock::now();
-		client.search("test");
-		time_end = chrono::high_resolution_clock::now();
-    		cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << " microseconds]" << endl;
-		query_time_sum += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	}
-	
-	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
-	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
- 
-	res = client.search("test");
-	cout << res.size()<<endl;
-	//Remove the dummy entities in raw search results.
-	vector<int> inds = client.process("test", res);
-	cout << "processed search result:" << inds.size() << endl;
-	//for (auto ind : inds) {
-	//	cout << ind << endl;
-	//}
-
-	//Update
-  vector<kv> update_data = generate_samples(db_size/4-1, &MAXCOUNT);
-  cout << "done" << endl;
-  vector<int> ids;
-  chrono::microseconds threshold(5000);
-  chrono::microseconds total(0);
-  vector<int> totaltime;
-  for (int i = 0; i < 15; i++) {
-    cout << i <<endl;
-    kv data  = update_data[i];
-    cout << "kv"<<endl;
-    client.update(data.keyword, data.ind, ADD);
-  }
-  cout << "done" << endl;
-  //sleep(5);
-  for (int i = 15; i < db_size/4-1; i++) {
-    kv data  = update_data[i];
-    time_start = chrono::high_resolution_clock::now();
-    client.update(data.keyword, data.ind, ADD);
-    time_end = chrono::high_resolution_clock::now();
-    total += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-    if (i % 16 == 15) {
-      if (chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() > threshold.count()){
-        cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << ", ";
-        totaltime.emplace_back(total.count());
-        ids.emplace_back(i);
-      } 
+void Server::storeEDB(const vector<pair<int, vector<string>>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& client_buffer, int min_value, int logN) {
+    EDBs.clear();
+    EDBs.resize(logN + 1);
+    min = min_value;
+    for (auto pair : client_edbs) {
+        EDBs[pair.first].assign(pair.second.begin(), pair.second.end());
     }
-    
-    
-  }
-  cout << endl ;
-  for (auto id:ids) {
-    cout << id << ",";
-  }
-  cout << endl ;
-  for (auto t:totaltime) {
-    cout << t << ",";
-  }
-	
 
-	//for (int i = 0; i < 500; i++) {
-	//	time_start = chrono::high_resolution_clock::now();
-	//	client.update("update", i, ADD);
-	//	time_end = chrono::high_resolution_clock::now();
-	//	cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << ", ";
-	//}
-	//cout << endl;
-        //for (int i = 0; i < 8; i++) {
-	//	client.update("test", i, DEL);
-	//}
-	//res.clear();
-	//inds.clear();
-	//res = client.search("test");
-	//inds = client.process("test", res);
-	//cout << "processed search result:" << inds.size() << endl;
-	//sort(inds.begin(), inds.end());
-	////for (auto ind : inds) {
-	////	cout << ind << endl;
-	////}
-	return 0;
+
+    estash.clear();
+    for (auto i : stash) {
+        estash.emplace_back(i);
+    }
+
+    buffer.clear();
+    buffer = client_buffer;
+}
+
+
+vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
+    vector<string>* edb;
+    edb = &EDBs[id];
+
+    vector<string> results;
+
+    for (GGMNode n : node_list) {
+        std::queue<GGMNode> internal_nodes;
+        internal_nodes.push(n);
+        int level = n.level;
+        while (level > 0) {
+            GGMNode node = internal_nodes.front();
+            //bitset<32> bits(node.index);
+            //cout << bits <<endl;
+            internal_nodes.pop();
+            uint8_t derived_key[16];
+            memcpy(derived_key, node.digest, 16);
+            GGMTree::derive_key_from_tree(derived_key, node.index, node.level, node.level - 1);
+            internal_nodes.push(GGMNode(node.index, node.level - 1, derived_key));
+
+            memcpy(derived_key, node.digest, 16);
+            GGMTree::derive_key_from_tree(derived_key, node.index + pow(2, node.level - 1), node.level, node.level - 1);
+            internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
+            level = internal_nodes.front().level;
+        }
+        while (!internal_nodes.empty()) {
+            GGMNode node = internal_nodes.front();
+            internal_nodes.pop();
+            while (true) {
+                uint32_t loc32 = node.digest[0] | (node.digest[1] << 8) | (node.digest[2] << 16) | (node.digest[3] << 24);
+                int length = ceil(log2(edb->size()));
+                uint32_t loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
+                if (loc < edb->size()) {
+                    results.emplace_back(edb->at(loc));
+                    break;
+                }
+                else {
+                    uint8_t digest[32] = {};
+                    sha256_digest(node.digest, 16, digest);
+                    memcpy(node.digest, digest, 16);
+                }
+            }
+        }
+
+    }
+    return results;
+}
+
+vector<string> Server::searchEstash() {
+    return estash;
+}
+
+vector<string> Server::searchBuffer() {
+    return buffer;
+}
+
+
+bool Server::update(string ct) {
+    buffer.emplace_back(ct);
+    if (buffer.size() == (int)(1 << (min))) {
+        return false;
+    }
+    return true;
 
 }
+
+vector<pair<int, vector<string>>> Server::updateDB() {
+    int i = min;
+    vector<pair<int, vector<string>>> res = {};
+    while (i < EDBs.size()) {
+        if (EDBs.empty() != 1 && EDBs[i].size() != 0) {
+            res.emplace_back(make_pair(i, EDBs[i]));
+            i++;
+        }
+        else {
+            break;
+        }
+    }
+    return res;
+}
+
+
+void Server::storeEDB(int ind, vector<string>& EDB, vector<string>& stash) {
+    buffer.clear();
+    estash.clear();
+    for (auto i : stash) {
+        estash.emplace_back(i);
+    }
+    vector<string> edb = {};
+    for (auto i : EDB) {
+        edb.emplace_back(i);
+    }
+    if (ind >= EDBs.size()) {
+        EDBs.clear();
+        EDBs.resize(ind + 1);
+        min = floor(log2(ind));
+        EDBs[ind].assign(edb.begin(), edb.end());
+    }
+    else {
+        EDBs[ind].clear();
+        EDBs[ind].assign(edb.begin(), edb.end());
+    }
+    for (int i = 0; i < ind; i++) {
+        EDBs[i].clear();
+    }
+    //min = ind;
+}
+
+int Server::getStashSize() {
+    return (int)estash.size();
+}
+
+int Server::getBufferSize() {
+    return (int)buffer.size();
+}
+
+int Server::getEDBSize(int i) {
+    return (int)EDBs[i].size();
+}
+

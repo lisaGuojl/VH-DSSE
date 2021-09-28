@@ -5,7 +5,7 @@ Server::Server() {
 }
 
 Server::~Server() {
-    
+
     EDBs.clear();
     estash.clear();
     buffer.clear();
@@ -13,12 +13,12 @@ Server::~Server() {
 
 void Server::storeEDB(const vector<pair<int, vector<string>>>& client_edbs, const std::vector<string>& stash, const std::vector<string>& client_buffer, int min_value, int logN) {
     EDBs.clear();
-    EDBs.resize(logN+1);
+    EDBs.resize(logN + 1);
     min = min_value;
     for (auto pair : client_edbs) {
         EDBs[pair.first].assign(pair.second.begin(), pair.second.end());
     }
-   
+
 
     estash.clear();
     for (auto i : stash) {
@@ -30,35 +30,35 @@ void Server::storeEDB(const vector<pair<int, vector<string>>>& client_edbs, cons
 }
 
 
-vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {	
+vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
     vector<string>* edb;
     edb = &EDBs[id];
-    
-    vector<string> results;
-    
-  for (GGMNode n : node_list) {
-        std::queue<GGMNode> internal_nodes;
-	internal_nodes.push(n);
-        int level = n.level;
-	while (level > 0){
-		GGMNode node = internal_nodes.front();
-		//bitset<32> bits(node.index);
-		//cout << bits <<endl;
-		internal_nodes.pop();
-		uint8_t derived_key[16];
-		memcpy(derived_key, node.digest, 16);
-    		GGMTree::derive_key_from_tree(derived_key, node.index, node.level, node.level-1);
-    		internal_nodes.push(GGMNode(node.index, node.level - 1, derived_key));
 
-	    	memcpy(derived_key, node.digest, 16);
-    		GGMTree::derive_key_from_tree(derived_key, node.index+ pow(2, node.level - 1), node.level, node.level-1);
-    		internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
-    		level = internal_nodes.front().level;
-	}
-	while (!internal_nodes.empty()) {
-	    GGMNode node = internal_nodes.front();
-	    internal_nodes.pop();
-	    while (true) {
+    vector<string> results;
+
+    for (GGMNode n : node_list) {
+        std::queue<GGMNode> internal_nodes;
+        internal_nodes.push(n);
+        int level = n.level;
+        while (level > 0) {
+            GGMNode node = internal_nodes.front();
+            //bitset<32> bits(node.index);
+            //cout << bits <<endl;
+            internal_nodes.pop();
+            uint8_t derived_key[16];
+            memcpy(derived_key, node.digest, 16);
+            GGMTree::derive_key_from_tree(derived_key, node.index, node.level, node.level - 1);
+            internal_nodes.push(GGMNode(node.index, node.level - 1, derived_key));
+
+            memcpy(derived_key, node.digest, 16);
+            GGMTree::derive_key_from_tree(derived_key, node.index + pow(2, node.level - 1), node.level, node.level - 1);
+            internal_nodes.push(GGMNode(node.index + pow(2, node.level - 1), node.level - 1, derived_key));
+            level = internal_nodes.front().level;
+        }
+        while (!internal_nodes.empty()) {
+            GGMNode node = internal_nodes.front();
+            internal_nodes.pop();
+            while (true) {
                 uint32_t loc32 = node.digest[0] | (node.digest[1] << 8) | (node.digest[2] << 16) | (node.digest[3] << 24);
                 int length = ceil(log2(edb->size()));
                 uint32_t loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
@@ -72,10 +72,10 @@ vector<string> Server::searchEDB(int id, const vector<GGMNode>& node_list) {
                     memcpy(node.digest, digest, 16);
                 }
             }
-   }
+        }
 
-  }
-  return results;
+    }
+    return results;
 }
 
 vector<string> Server::searchEstash() {
@@ -93,16 +93,15 @@ bool Server::update(string ct) {
         return false;
     }
     return true;
-    
+
 }
 
 vector<pair<int, vector<string>>> Server::updateDB() {
     int i = min;
-    vector<pair<int, vector<string>>> res={};
+    vector<pair<int, vector<string>>> res = {};
     while (i < EDBs.size()) {
         if (EDBs.empty() != 1 && EDBs[i].size() != 0) {
             res.emplace_back(make_pair(i, EDBs[i]));
-            EDBs[i].clear();
             i++;
         }
         else {
@@ -119,15 +118,22 @@ void Server::storeEDB(int ind, vector<string>& EDB, vector<string>& stash) {
     for (auto i : stash) {
         estash.emplace_back(i);
     }
+    vector<string> edb = {};
+    for (auto i : EDB) {
+        edb.emplace_back(i);
+    }
     if (ind >= EDBs.size()) {
-	vector<string> edb = {};
-    	for (auto i : EDB) {
-        	edb.emplace_back(i);
-    	}
-	EDBs.push_back(edb);
+        EDBs.clear();
+        EDBs.resize(ind + 1);
+        min = floor(log2(ind));
+        EDBs[ind].assign(edb.begin(), edb.end());
     }
     else {
-	EDBs[ind].assign(EDB.begin(), EDB.end());
+        EDBs[ind].clear();
+        EDBs[ind].assign(edb.begin(), edb.end());
+    }
+    for (int i = 0; i < ind; i++) {
+        EDBs[i].clear();
     }
     //min = ind;
 }

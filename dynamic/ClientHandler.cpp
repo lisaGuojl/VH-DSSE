@@ -21,28 +21,28 @@ unsigned long ClientHandler::get_index(const string& keyword, unsigned short ind
 	uint8_t* pair = new uint8_t[keyword.length() + 1];
 	//strncpy((char*)pair, keyword.c_str(), keyword.length() + 1);
 	stringcpy((char*)pair, keyword.length() + 1, keyword.c_str());
-	
+
 	// get the predix (the hash value of keyword)
 	uint8_t digest[32] = {};
 	sha256_digest(pair, keyword.length(), digest);
 	uint32_t tag = digest[4] | (digest[1] << 8);
 
 	std::bitset<32> bits;
-	bits = ind << 1 | (tag << 16) ;
+	bits = ind << 1 | (tag << 16);
 	//std::cout << "add tag" <<bits << std::endl;
 	return bits.to_ulong();
 }
 
-void ClientHandler::update(const string& keyword, int ind, OP op, string& input_text) {
-	
+void ClientHandler::update(const string& keyword, int ind, OP op, string& text) {
+
 	unsigned long index = get_index(keyword, ind);
-	string text;
-	if (op == ADD) {
-		text = to_string(index) + "0";
-	}
-	else {
-		text = to_string(index) + "1";
-	}
+	//string text;
+	//if (op == ADD) {
+	//	text = to_string(index) + "0";
+	//}
+	//else {
+	//	text = to_string(index) + "1";
+	//}
 	bool res = table->insert(index, text);
 	if (res == false) {
 		stash_len += 1;
@@ -55,7 +55,7 @@ void ClientHandler::update(const string& keyword, int ind, OP op, string& input_
 void ClientHandler::upload() {
 	for (uint32_t i = 0; i < table->table_size(); ++i) {
 		string plain = table->table(i).second;
-		unsigned char* data = new unsigned char[plain.length()+1];
+		unsigned char* data = new unsigned char[plain.length() + 1];
 		stringcpy((char*)data, plain.length() + 1, plain.c_str());
 		int ciphertext_len = 0;
 		unsigned char ciphertext[1000] = {};
@@ -77,13 +77,13 @@ void ClientHandler::upload() {
 
 int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
 	stash_len = 0;
-  edb.clear();
+	edb.clear();
 	stash.clear();
 	vector<uint8_t> seed(seedstr.begin(), seedstr.end());
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-  int eviction = 5 * log(size);
+	int eviction = 5 * log(size);
 	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
 	for (kv item : db) {
 		update(item.keyword, item.ind, item.op, item.text);
@@ -157,7 +157,7 @@ vector<GGMNode> ClientHandler::getToken(const string& keyword, int l, uint8_t* s
 			one_list.emplace_back(i);
 		}
 	}
-	
+
 	int Imax = one_list.back();
 	// l = 2 ^ 15.
 	if (zero_list.size() == 0) {
@@ -198,7 +198,7 @@ vector<GGMNode> ClientHandler::getToken(const string& keyword, int l, uint8_t* s
 		memcpy(i.digest, seed, 16);
 		GGMTree::derive_key_from_tree(i.digest, i.index, tree->get_level(), i.level);
 	}
- 
+
 	return remain_node;
 }
 
@@ -211,18 +211,31 @@ int ClientHandler::addEDB(int size, string& seedstr, vector<string> plains)
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-  int eviction = 5 * log(size);
+	int eviction = 5 * log(size);
 	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
+	unordered_map<unsigned long, int> map;
 	for (auto plain : plains) {
 		if (plain.length() == 0) {
 			continue;
 		}
 		string index_str = plain.substr(0, plain.length() - 1);
-		//cout << index_str << endl;
-		//bitset<32> index_bit(index_str);
-		//uint32_t index = index_bit.to_ulong();
 		unsigned long index = stoul(index_str, nullptr, 0);
-		bool res = table->insert(index, plain);
+		bitset<32> bits(index);
+		bitset<16> tagbits;
+		bitset<32> addrbits;
+		for (int i = 0; i < 16;i++) {
+			tagbits[i] = bits[i + 16];
+		}
+		auto it = map.find(tagbits.to_ulong());
+		if (it == map.end()) {
+			map[tagbits.to_ulong()] = 0;
+			addrbits = (unsigned short)0 << 1 | tagbits.to_ulong() << 16;
+		}
+		else {
+			it->second += 1;
+			addrbits = (unsigned short)(it->second) << 1 | tagbits.to_ulong() << 16;
+		}
+		bool res = table->insert(addrbits.to_ulong(), plain);
 		if (res == false) {
 			stash_len += 1;
 			stash.emplace_back(plain);

@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include "GGMTree.h"
 #include "cuckoo.h"
 #include "Utils.h"
