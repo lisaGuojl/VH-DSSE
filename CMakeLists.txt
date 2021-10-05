@@ -10,14 +10,14 @@ FIND_PACKAGE(OpenSSL REQUIRED)
 
 
 # load header
-INCLUDE_DIRECTORIES(. dynamic static)
+INCLUDE_DIRECTORIES(. dynamic static examples utils dPRF kuku)
 
 # set executable outputs
 
-ADD_EXECUTABLE(StaticTest static/Source.cpp static/ClientHandler.cpp static/ServerHandler.cpp static/cuckoo.cpp static/GGMTree.cpp static/Utils.cpp)
-ADD_EXECUTABLE(DynamicTest dynamic/Acc.cpp dynamic/Client.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp dynamic/cuckoo.cpp dynamic/GGMTree.cpp dynamic/Utils.cpp)
-ADD_EXECUTABLE(DynamicAccuracyTest dynamic/MulAcc.cpp dynamic/MulClient.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp dynamic/cuckoo.cpp dynamic/GGMTree.cpp dynamic/Utils.cpp)
+ADD_EXECUTABLE(StaticTest static/Source.cpp static/ClientHandler.cpp static/ServerHandler.cpp kuku/cuckoo.cpp dPRF/GGMTree.cpp utils/Utils.cpp)
+ADD_EXECUTABLE(DynamicTest dynamic/Source.cpp dynamic/Client.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp kuku/cuckoo.cpp dPRF/GGMTree.cpp utils/Utils.cpp)
+ADD_EXECUTABLE(PerformanceTest examples/examples.cpp examples/SearchTest.cpp examples/UpdateTest.cpp examples/AccuracyTest.cpp dynamic/Client.cpp dynamic/ClientHandler.cpp dynamic/Server.cpp kuku/cuckoo.cpp dPRF/GGMTree.cpp utils/Utils.cpp)
 # link
 TARGET_LINK_LIBRARIES(StaticTest OpenSSL::Crypto)
 TARGET_LINK_LIBRARIES(DynamicTest OpenSSL::Crypto)
-TARGET_LINK_LIBRARIES(DynamicAccuracyTest OpenSSL::Crypto)
+TARGET_LINK_LIBRARIES(PerformanceTest OpenSSL::Crypto)

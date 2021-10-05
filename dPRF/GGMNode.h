@@ -1,5 +1,5 @@
-#ifndef PUNCTURABLE_PRF_GGMNODE_H
-#define PUNCTURABLE_PRF_GGMNODE_H
+#ifndef DELEGATABLE_PRF_GGMNODE_H
+#define DELEGATABLE_PRF_GGMNODE_H
 #include "Utils.h"
 //extern "C" {
 //#include "Utils.h"
@@ -19,7 +19,7 @@ public:
     GGMNode(unsigned long index, int level, uint8_t* digest) {
         this->index = index;
         this->level = level;
-        memcpy(this->digest, digest, AES_BLOCK_SIZE);
+        memcpy(this->digest, digest, 16);
     }
 };
 

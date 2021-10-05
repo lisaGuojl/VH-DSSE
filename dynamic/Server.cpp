@@ -150,3 +150,10 @@ int Server::getEDBSize(int i) {
     return (int)EDBs[i].size();
 }
 
+void Server::clean(int n) {
+    estash.clear();
+    buffer.clear();
+    for (int i=0; i<n; i++){
+      EDBs[i].clear();
+    }
+}

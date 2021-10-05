@@ -20,10 +20,10 @@ private:
     float alpha;
     float beta;
 
-    uint8_t* Kstash = (unsigned char*)"7891234560123456";
-    uint8_t* Kbuf = (unsigned char*)"0123456789123456";
-    uint8_t* Kske = (unsigned char*)"7891234560123456";
-    uint8_t* iv = (unsigned char*)"0123456789123456";
+    uint8_t* Kstash = (unsigned char*)"78912345601234567891234560123456";
+    uint8_t* Kbuf = (unsigned char*)"01234567891234560123456789123456";
+    uint8_t* Kske = (unsigned char*)"78912345601234567891234560123456";
+    uint8_t* iv = (unsigned char*)"01234567891234560123456789123456";
     uint8_t* seed = (unsigned char*)"0123456789123456";
     vector<string> prf_seeds;
 
@@ -40,7 +40,7 @@ private:
 
 
     string decrypt(string& cipher, uint8_t* key);
-    void processDB(vector<kv>* data);
+    void shuffleDB(vector<kv>* data);
     void updateDB();
 
 public:
@@ -54,6 +54,9 @@ public:
     int getStashSize();
     int getBufferSize();
     int getEDBSize();
+    
+    //just for update test
+    void clean();
 };
 
 

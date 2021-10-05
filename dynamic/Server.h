@@ -1,18 +1,12 @@
 #pragma once
-#pragma once
 
 
 #ifndef SERVER_H
 #define SERVER_H
 
 
-#include <chrono>
-#include <cstdint>
-#include <cstring>
-#include <iostream>
 #include <string>
 #include <vector>
-#include <utility>
 #include <unordered_map>
 #include <queue>
 #include "Utils.h"
@@ -50,6 +44,9 @@ public:
     int getStashSize();
     int getBufferSize();
     int getEDBSize(int i);
+    
+    //for update test
+    void clean(int n);
 };
 
 

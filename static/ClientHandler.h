@@ -5,6 +5,7 @@
 #define CLIENTHANDLER_H
 
 #include <functional>
+#include <unordered_map>
 #include "GGMTree.h"
 #include "cuckoo.h"
 
@@ -34,9 +35,9 @@ struct kv {
 
 class ClientHandler {
 private:
-    uint8_t* key = (unsigned char*)"0123456789123456";
-    uint8_t* iv = (unsigned char*)"0123456789123456";
-    uint8_t* prf_seed = (unsigned char*)"0123456789123456";
+    uint8_t* key = (unsigned char*)"01234567891234560123456789123456";
+    uint8_t* iv = (unsigned char*)"01234567891234560123456789123456";
+    uint8_t* prf_seed = (unsigned char*)"01234567891234560123456789123456";
     float alpha;
 
     GGMTree* tree;
@@ -54,7 +55,8 @@ public:
     ClientHandler(int size, float alpha);
     ~ClientHandler();
     unsigned long get_index(const string& keyword, unsigned short ind);
-    void update(const string& keyword, int ind, OP op, string& input_text);
+    void shuffleDB(vector<kv>* db);
+    void update(const string& keyword, int ind, OP op, string& text);
     void upload();
     int setup(vector<kv> db);
     vector<GGMNode> getToken(const string& keyword, int length);

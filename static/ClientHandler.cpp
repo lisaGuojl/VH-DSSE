@@ -33,16 +33,33 @@ unsigned long ClientHandler::get_index(const string& keyword, unsigned short ind
 	return bits.to_ulong();
 }
 
-void ClientHandler::update(const string& keyword, int ind, OP op, string& input_text) {
+void ClientHandler::shuffleDB(vector<kv>* data) {
+	unordered_map<string, int> map;
+	vector<kv>* p = data;
+	for (int i = 0; i < p->size(); i++) {
+		unsigned long index = get_index(p->at(i).keyword, p->at(i).ind);
+		if (p->at(i).op == ADD) {
+			p->at(i).text = to_string(index) + "0";
+		}
+		else {
+			p->at(i).text = to_string(index) + "1";
+		}
+		auto it = map.find(p->at(i).keyword);
+		if (it == map.end()) {
+			map[p->at(i).keyword] = 0;
+			p->at(i).ind = 0;
+		}
+		else {
+			it->second += 1;
+			p->at(i).ind = it->second;
+		}
+	}
+}
+
+void ClientHandler::update(const string& keyword, int ind, OP op, string& text) {
 
 	unsigned long index = get_index(keyword, ind);
-	string text;
-	if (op == ADD) {
-		text = to_string(index) + "0";
-	}
-	else {
-		text = to_string(index) + "1";
-	}
+
 	bool res = table->insert(index, text);
 	if (res == false) {
 		stash_len += 1;
@@ -82,8 +99,9 @@ int ClientHandler::setup(vector<kv> db) {
 	int size = db.size();
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	int eviction = 5 * log(size);
+	int eviction = ceil(5 * log(size));
 	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
+  shuffleDB(&db);
 	for (kv item : db) {
 		update(item.keyword, item.ind, item.op, item.text);
 	}

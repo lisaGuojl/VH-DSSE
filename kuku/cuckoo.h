@@ -193,22 +193,16 @@ namespace cuckoo {
                     return loc;
                 }
                 else {
+                    /*for ( unsigned ui = 0 ; ui < 16 ; ++ui ) {
+                      derived_key[ui] = ~derived_key[ui];
+                    }*/
+
                     uint8_t digest[32] = {};
-                    sha256_digest(derived_key, 32, digest);
+                    sha256_digest(derived_key, 16, digest);
                     memcpy(derived_key, digest, 16);
                 }
             }
-            /*for (int i = 0; i < 4; i++) {
-                uint32_t loc32 = derived_key[4*i] | (derived_key[4 * i+1] << 8) | (derived_key[4 * i+2] << 16) | (derived_key[4 * i+3] << 24);
-                int length = ceil(log2(table_size_));
-                loc = (uint32_t)(loc32 & ((length == 32) ? 0xFFFFFFFF : (((uint32_t)1 << length) - 1)));
-                if (loc < table_size_) {
-                    return loc;
-                }
-            }*/
-           
-            //loc = table_size_;
-            //return loc;
+
         }
 
     };

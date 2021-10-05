@@ -1,5 +1,5 @@
-#ifndef PUNCTURABLE_PRF_UTILS_H
-#define PUNCTURABLE_PRF_UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -7,11 +7,9 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 
-//#include <sstream>
-//#include <iomanip>
 
-#define AES_BLOCK_SIZE 16
-#define DIGEST_SIZE 32
+//#define AES_BLOCK_SIZE 16
+#define DIGEST_SIZE 16
 #define GGM_SIZE 4294967296 //2^32
 
 

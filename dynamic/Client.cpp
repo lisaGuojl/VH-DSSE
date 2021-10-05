@@ -34,7 +34,7 @@ Client::~Client() {
 	delete clienthandler;
 }
 
-void Client::processDB(vector<kv>* data) {
+void Client::shuffleDB(vector<kv>* data) {
 	unordered_map<string, int> map;
 	vector<kv>* p = data;
 	for (int i = 0; i < p->size(); i++) {
@@ -68,7 +68,7 @@ void Client::setup(vector<kv> data) {
 		if (bits[i] == 1) {
 			exist[i] = true;
 			vector<kv> db(data.begin() + idx, data.begin() + idx + (int)(1 << i));
-			processDB(&db);
+			shuffleDB(&db);
 			int stash_len = clienthandler->setup((int)1 << i, prf_seeds[i], db);
 			EDBs.emplace_back(make_pair(i, clienthandler->get_edb()));
 			if (stash_len > 0) {
@@ -101,8 +101,6 @@ void Client::setup(vector<kv> data) {
 }
 
 string Client::decrypt(string& cipher, uint8_t* key) {
-	//unsigned char* encrypted_data = new unsigned char[cipher.length() + 1];
-	//stringcpy((char*)encrypted_data, cipher.length() + 1, cipher.c_str());
 	unsigned char encrypted_data[1000] = {};
 	for (int i = 0; i < (cipher.length());i++) {
 		encrypted_data[i] = cipher[i];
@@ -128,7 +126,10 @@ vector<string> Client::search(const string& keyword) {
 			vector<string> Xi = server->searchEDB(i, token);
 			for (auto cipher : Xi) {
 				string plain = decrypt(cipher, Kske);
-				results.emplace_back(plain);
+				if (plain != "NULL") {
+					results.emplace_back(plain);
+				}
+				
 			}
 			Xi.clear();
 		}
@@ -137,14 +138,18 @@ vector<string> Client::search(const string& keyword) {
 	vector<string> stash = server->searchEstash();
 	for (auto cipher : stash) {
 		string plain = decrypt(cipher, Kstash);
-		results.emplace_back(plain);
+		if (plain != "NULL") {
+					results.emplace_back(plain);
+				}
 	}
 	stash.clear();
 
 	vector<string> buf = server->searchBuffer();
 	for (auto cipher : buf) {
 		string plain = decrypt(cipher, Kbuf);
-		results.emplace_back(plain);
+		if (plain != "NULL") {
+					results.emplace_back(plain);
+				}
 	}
 	buf.clear();
 
@@ -166,7 +171,6 @@ void Client::update(const string& keyword, int ind, OP op) {
 	int ciphertext_len = 0;
 	unsigned char ciphertext[100] = {};
 	ciphertext_len = aes_encrypt(data, plain.length(), Kbuf, iv, ciphertext);
-	//std::string ct(reinterpret_cast<char*>(ciphertext), ciphertext_len/ sizeof(ciphertext[0]));	
 	string ct = string((char*)ciphertext, ciphertext_len);
 	bool res = server->update(ct);
 	if (res == false) {
@@ -237,9 +241,6 @@ void Client::updateDB() {
 		}
 	}
 	
-
-	//MIN = MIN+1;
-	//exist[MIN] = true;
 	int size = MIN;
 	if (edbs.size() != 0) {
 		size = edbs.back().first + 1;
@@ -338,4 +339,9 @@ int Client::getEDBSize() {
 		}
 	}
 	return res;
+}
+
+
+void Client::clean() {
+    server->clean(floor(log2(N)));
 }

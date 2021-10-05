@@ -43,7 +43,6 @@ private:
     std::vector<string> edb;
     uint32_t table_size;
 
-    //unsigned long get_index(const string& keyword, unsigned short ind);
 
 public:
     ClientHandler(float alpha);

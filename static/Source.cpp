@@ -1,6 +1,7 @@
 //#pragma warning(disable:4996)
 
 #include <iostream>
+#include <chrono>
 #include "ClientHandler.h"
 #include "Utils.h"
 #include <unistd.h>
@@ -73,25 +74,32 @@ int main() {
 	if ((cin >> inputMRL)) {
 		MAXCOUNT = inputMRL;
 	}
-	ClientHandler client(db_size, alpha);
+	ClientHandler* client = new ClientHandler(db_size, alpha);
 	chrono::high_resolution_clock::time_point time_start, time_end;
-	chrono::microseconds time_diff;
+	chrono::microseconds time_diff(0);
 
 	//Setup
-	time_start = chrono::high_resolution_clock::now();
-	int stash_size = client.setup(dataset);
-	time_end = chrono::high_resolution_clock::now();
-	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
-	cout << "Combined Stash size: " << stash_size << endl;
+  int stash_size = client->setup(dataset);
+  delete client;
+  for (int i = 0; i < 10; i++) {
+    client = new ClientHandler(db_size, alpha);
+    time_start = chrono::high_resolution_clock::now();
+  	stash_size += client->setup(dataset);
+	  time_end = chrono::high_resolution_clock::now();
+	  time_diff += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+    delete client;
+  }
+	cout << "Setup Done [" << time_diff.count()/10 << " microseconds]" << endl;
+	cout << "Combined Stash size: " << stash_size/11 << endl;
 	//int storage = (client.getStashSize() + client.getBufferSize() + client.getEDBSize()) * sizeof(char) * 17;
 	//cout << "Storage : " << (storage / 1024.0 / 1024.0) << " MB" << endl;
 
 
 	//Search
+ /*
 	vector<string> res = client.search("test", MAXCOUNT);
   //sleep(3);
-	int count = 10;
+	int count = 1;
 	chrono::microseconds query_time_sum(0);
   client.search("test", MAXCOUNT);
 	for (int i = 0; i < count; i++) {
@@ -105,7 +113,7 @@ int main() {
 	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
 	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
   cout << res.size() <<endl;
-
+  */
 	return 0;
 
 }

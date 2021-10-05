@@ -8,7 +8,6 @@ ClientHandler::ClientHandler(float a) {
 }
 
 ClientHandler::~ClientHandler() {
-	//table->clear_table();
 	stash.clear();
 	edb.clear();
 	delete tree;
@@ -19,7 +18,6 @@ ClientHandler::~ClientHandler() {
 unsigned long ClientHandler::get_index(const string& keyword, unsigned short ind)
 {
 	uint8_t* pair = new uint8_t[keyword.length() + 1];
-	//strncpy((char*)pair, keyword.c_str(), keyword.length() + 1);
 	stringcpy((char*)pair, keyword.length() + 1, keyword.c_str());
 
 	// get the predix (the hash value of keyword)
@@ -29,25 +27,16 @@ unsigned long ClientHandler::get_index(const string& keyword, unsigned short ind
 
 	std::bitset<32> bits;
 	bits = ind << 1 | (tag << 16);
-	//std::cout << "add tag" <<bits << std::endl;
 	return bits.to_ulong();
 }
 
 void ClientHandler::update(const string& keyword, int ind, OP op, string& text) {
 
 	unsigned long index = get_index(keyword, ind);
-	//string text;
-	//if (op == ADD) {
-	//	text = to_string(index) + "0";
-	//}
-	//else {
-	//	text = to_string(index) + "1";
-	//}
+
 	bool res = table->insert(index, text);
 	if (res == false) {
 		stash_len += 1;
-		//stash.push_back(text);
-		//std::bitset<32> bits = index;
 		stash.emplace_back(text);
 	}
 }
@@ -83,7 +72,7 @@ int ClientHandler::setup(int size, string& seedstr, vector<kv> db) {
 	prf_seed = &seed[0];
 	uint32_t table_size = ceil(size * 2 * (1 + alpha));
 	item_type empty_item = make_pair((unsigned long)0, "NULL");
-	int eviction = 5 * log(size);
+	int eviction = ceil(5 * log(size));
 	table = new KukuTable(table_size, 0, eviction, empty_item, prf_seed);
 	for (kv item : db) {
 		update(item.keyword, item.ind, item.op, item.text);
@@ -117,7 +106,6 @@ vector<GGMNode> ClientHandler::getToken_min_coverage(const string& keyword, int 
 	for (int i = 0; i < 2 * l; ++i) {
 		std::bitset<32> bits;
 		bits = (short int)i | (tag << 16);
-		//std::cout << "search tag" << bits << std::endl;
 		node_list.emplace_back(GGMNode(bits.to_ulong(), 0));
 	}
 

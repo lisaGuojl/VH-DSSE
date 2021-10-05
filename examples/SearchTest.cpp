@@ -8,7 +8,7 @@
 using namespace std;
 
 
-std::string random_string(std::size_t length)
+string random_string_s(std::size_t length)
 {
 	static const std::string alphabet = "abcdefghijklmnopqrstuvwxyz";
 	static std::default_random_engine rng(std::time(nullptr));
@@ -19,63 +19,15 @@ std::string random_string(std::size_t length)
 	return str;
 }
 
-vector<kv> Zipf(int num_word, int size, int* p) {
-	float sum = 0.0;
-	for (int i = 1; i <= num_word; i++) {
-		sum += 1.0 / i;
-	}
 
-	vector<string> keywords = { "test", "sse", "dynamic", "static" };
-	for (int i = 4; i < num_word; i++) {
-		string keyword = random_string(5);
-		keywords.emplace_back(keyword);
-	}
-
-	vector<int> counts = {};
-	int count = 0;
-	for (int i = 1; i <= num_word; i++) {
-		if (i == num_word) {
-			int num = size - count;
-			count += num;
-			counts.emplace_back(num);
-		}
-		int num = floor(1.0 / i / sum * size);
-		counts.emplace_back(num);
-		count += num;
-	}
-	auto it = max_element(std::begin(counts), std::end(counts));
-	*p = *it;
-
-	srand(unsigned(time(0)));
-
-	vector<kv> data(0);
-
-	for (int i = 0;i < num_word; i++) {
-		cout << keywords[i] << " : " << counts[i] << endl;
-		for (int j = 0; j < counts[i]; j++) {
-			kv sample;
-			sample.keyword = keywords[i];
-			sample.ind = j;
-			sample.op = ADD;
-			string id = std::to_string(j);
-
-			data.emplace_back(sample);
-
-		}
-	}
-
-	random_shuffle(data.begin(), data.end());
-	return data;
-}
-
-vector<kv> generate_samples(int size, int* p) {
+vector<kv> generate_samples_s(int size, int* p) {
 	vector<kv> data(0);
 	vector<string> keywords = { "test" };
 	vector<int> counts = { 500 };
 	int total = counts[0];
 
 	srand(time(NULL));
-	//srand(unsigned(time(0)));
+
 	while (total < size) {
 		int num = 0;
 		num = rand() % (1 << 15) + 1;
@@ -83,7 +35,7 @@ vector<kv> generate_samples(int size, int* p) {
 			num = size - total;
 		}
 		counts.emplace_back(num);
-		string keyword = random_string(5);
+		string keyword = random_string_s(5);
 		keywords.emplace_back(keyword);
 		total += num;
 	}
@@ -106,17 +58,18 @@ vector<kv> generate_samples(int size, int* p) {
 	return data;
 }
 
-int main() {
+int SearchTest() {
 	cout << "Please input the size of the database N." << endl;
 	int db_size = 0;
 	cin >> db_size;
 	cout << "Please input alpha (0<alpha<1)." << endl;
 	float alpha = 0;
+
 	cin >> alpha;
 	int MAXCOUNT = 0;
 	cout << "------------------------" << endl;
 	cout << "keywords and counts: " << endl;
-	vector<kv> dataset = generate_samples(db_size, &MAXCOUNT);
+	vector<kv> dataset = generate_samples_s(db_size, &MAXCOUNT);
 	cout << "maximum response length: " << MAXCOUNT << endl;
 	cout << "------------------------" << endl;
 	cout << " MRL for query test : " << endl;
@@ -149,38 +102,17 @@ int main() {
 		query_time_sum += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
 	}
 
-	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
-	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
+	cout << "Search Done [Total: " << query_time_sum.count() / count << " us]" << endl;
+	cout << "Per result: [" << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms]" << endl;
 
 	//Remove the dummy entities in raw search results.
 	vector<int> inds = client.process("test", res);
 	cout << "processed search result:" << inds.size() << endl;
 	for (auto ind : inds) {
-		cout << ind << endl;
+	//	cout << ind << endl;
 	}
 
-	//Update
-	cout << "\n" << "ADD 100 entities for keyword 'update'";
-	time_start = chrono::high_resolution_clock::now();
-	for (int i = 0; i < 100; i++) {
-		time_start = chrono::high_resolution_clock::now();
-		client.update("update", i, ADD);
-	}
-	time_end = chrono::high_resolution_clock::now();
-	cout << "Total time: [" << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << " microseconds]" << endl;
-	cout << "DEL 8 entities for keyword test";
-	for (int i = 0; i < 8; i++) {
-		client.update("test", i, DEL);
-	}
-	res.clear();
-	inds.clear();
-	res = client.search("test");
-	inds = client.process("test", res);
-	cout << "Search 'test', processed search result:" << inds.size() << endl;
-	for (auto ind : inds) {
-		cout << ind << ", ";
-	}
-	cout << endl;
+
 
 	return 0;
 }

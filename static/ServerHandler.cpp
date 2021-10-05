@@ -3,13 +3,10 @@
 
 ServerHandler::ServerHandler(uint32_t table_size) {
     edb_size = table_size;
-    /*item_type empty_item = make_pair((unsigned long)-1, "NULL");
-    uint8_t* prf_seed = (unsigned char*)"0123456789123456";
-    table = new KukuTable(table_size, 0, 0, empty_item, prf_seed);*/
+
 }
 
 ServerHandler::~ServerHandler() {
-    //table->clear_table();
     edb.clear();
     estash.clear();
     buffer.clear();
