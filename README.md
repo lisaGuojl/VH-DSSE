@@ -26,6 +26,8 @@ After compiling the project, two executable files *StaticTest* and *DynamicTest*
 ./StaticTest
 # For VH-DSSE test
 ./DynamicTest
+# For VH-DSSE performance evaluation
+./PerformanceTest
 ```
 
 
