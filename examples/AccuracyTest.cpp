@@ -50,26 +50,54 @@ vector<kv> Zipf(int num_word, int size, int* p) {
 	}
 	auto it = max_element(std::begin(counts), std::end(counts));
 	*p = *it;
+	for (int i = 0;i < 4; i++) {
+		first4ini.emplace_back(make_pair(keywords[i], 0));
+	}
 
 	srand(unsigned(time(0)));
 
 	vector<kv> data(0);
 
 	for (int i = 0;i < num_word; i++) {
-		cout << keywords[i] << " : " << counts[i] << endl;
+		//cout << keywords[i] << " : " << counts[i] << endl;
 		for (int j = 0; j < counts[i]; j++) {
 			kv sample;
 			sample.keyword = keywords[i];
 			sample.ind = j;
 			sample.op = ADD;
 			string id = std::to_string(j);
-
 			data.emplace_back(sample);
 
 		}
 	}
 
 	random_shuffle(data.begin(), data.end());
+	for (int i = 0; i < size; i++) {
+		if (i % 2 == 1) {
+			ADDdata.emplace_back(data[i]);
+		}
+		else {
+			SETUPdata.emplace_back(data[i]);
+			if (data[i].keyword == "test") {
+				first4ini[0].second += 1;
+			}
+			if (data[i].keyword == "sse") {
+				first4ini[1].second += 1;
+			}
+			if (data[i].keyword == "dynamic") {
+				first4ini[2].second += 1;
+			}
+			if (data[i].keyword == "static") {
+				first4ini[3].second += 1;
+			}
+		}
+	}
+	random_shuffle(data.begin(), data.end());
+	for (int i = 0; i < size; i++) {
+		if (i % 2 == 1) {
+			DELdata.emplace_back(data[i]);
+		}
+	}
 	return data;
 }
 
@@ -108,22 +136,21 @@ int AccuracyTest() {
 	float alpha = 0;
 	cin >> alpha;
 	int MAXCOUNT = 0;
-	cout << "------------------------" << endl;
+	cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
 	cout << "keywords and counts: " << endl;
 	vector<kv> dataset = Zipf(num_keywords, db_size, &MAXCOUNT);
 	cout << "maximum response length: " << MAXCOUNT << endl;
-	cout << "------------------------" << endl;
-	if (MAXCOUNT > (int) 1 << 16 - 1){
+	cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
+	if (MAXCOUNT > (int)1 << 16 - 1) {
 		cout << "maximum response length should less than 2^16-1, Please try smaller N." << endl;
 		throw "MRL is too larger.";
 	}
 	db_size = SETUPdata.size();
-	cout << "setup database size: " << db_size << endl;
- 	MAXCOUNT = 0;
+	MAXCOUNT = 0;
 
-	Client* client1 = new Client(db_size, alpha, MAXCOUNT);
-	Client* client2 = new Client(db_size, alpha, MAXCOUNT);
-	Client* client3 = new Client(db_size, alpha, MAXCOUNT);
+	Client* client1 = new Client(db_size, alpha, first4ini[0].second);
+	Client* client2 = new Client(db_size, alpha, first4ini[0].second);
+	Client* client3 = new Client(db_size, alpha, first4ini[0].second);
 
 	//Setup
 	float addfn[3][4][5] = {};
@@ -131,22 +158,23 @@ int AccuracyTest() {
 	float delfp[3][4][5] = {};
 	for (int l = 0; l < 10; l++)
 	{
-		cout << l+1 << "-th run" <<endl;
-    	client1->setup(SETUPdata);
+		cout << l + 1 << "-th run" << endl;
+		cout << "setup database size: " << db_size << endl;
+		client1->setup(SETUPdata);
 		client2->setup(SETUPdata);
 		client3->setup(SETUPdata);
-    	vector<pair<string, int>> first4(first4ini.begin(), first4ini.end());
+		vector<pair<string, int>> first4(first4ini.begin(), first4ini.end());
 
 		for (auto pair : first4) {
 			cout << pair.first << " : " << pair.second << endl;
 		}
 
-		cout << "------------------------" << endl;
+		cout << "-------------------------------" << endl;
 		int addsize = floor(ADDdata.size() / 5);
 		vector<vector<int>> additems;
 		additems.resize(4);
 		for (int ai = 0; ai < 5; ai++) {
-			cout << "ADD " << ai+1 << "0% entities" << endl;
+			cout << "ADD " << ai + 1 << "0% entities, ";
 			vector<kv> adata;
 			if (ai == 4) {
 				adata.assign(ADDdata.begin() + ai * addsize, ADDdata.end());
@@ -172,10 +200,11 @@ int AccuracyTest() {
 				}
 			}
 			db_size += adata.size();
-			cout << "Update " << adata.size() << " items" << endl;
-      		for(auto pair : first4) {
-        		cout << pair.second << ", " <<endl;
-      		}
+			cout << "after update " << endl;
+			for (auto pair : first4) {
+				cout << pair.first << ":" << pair.second << ", ";
+			}
+			cout << endl;
 			int count = 0;
 			while (count < 4) {
 				cout << "Search " << first4[count].first << endl;
@@ -205,12 +234,12 @@ int AccuracyTest() {
 
 
 		}
-		cout << "------------------------" << endl;
+		cout << "-------------------------------" << endl;
 		int delsize = floor(DELdata.size() / 5);
-		vector<vector<int>> delitems={};
+		vector<vector<int>> delitems = {};
 		delitems.resize(4);
 		for (int di = 0; di < 5;di++) {
-			cout << "DEL " << di+1 << "0% entities" << endl;
+			cout << "DEL " << di + 1 << "0% entities, ";
 			vector<kv> ddata;
 			int sum = 0;
 			if (di == 4) {
@@ -238,17 +267,17 @@ int AccuracyTest() {
 				}
 				sum += 1;
 			}
-			for (auto i : delitems) {
-				cout << i.size() << ", ";
-				sort(i.begin(), i.end());
+			cout << "after update " << endl;
+			for (int i = 0;i < 4;i++) {
+				cout << first4[i].first << ":" << first4[i].second - delitems[i].size() << ", ";
+				sort(delitems[i].begin(), delitems[i].end());
 			}
-			cout << " DEL " << sum << " items" << endl;
-
+			cout << endl;
 			int count = 0;
 			while (count < 4) {
-				vector<int> total={};
-				vector<int> real={};
-				vector<int> fp={};
+				vector<int> total = {};
+				vector<int> real = {};
+				vector<int> fp = {};
 				for (int i = 0; i < first4[count].second; i++) {
 					total.emplace_back(i);
 				}
@@ -298,15 +327,16 @@ int AccuracyTest() {
 
 				count++;
 			}
-			
+
 		}
-    delete client1;
-    delete client2;
+		cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
+		delete client1;
+		delete client2;
 		delete client3;
 		db_size = SETUPdata.size();
-		client1 = new Client(db_size, alpha, MAXCOUNT);
-		client2 = new Client(db_size, alpha, MAXCOUNT);
-		client3 = new Client(db_size, alpha, MAXCOUNT);
+		client1 = new Client(db_size, alpha, first4ini[0].second);
+		client2 = new Client(db_size, alpha, first4ini[0].second);
+		client3 = new Client(db_size, alpha, first4ini[0].second);
 
 	}
 

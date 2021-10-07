@@ -19,8 +19,8 @@ int main()
         cout << "| Examples                   | Source Files               |" << endl;
         cout << "+----------------------------+----------------------------+" << endl;
         cout << "| 1. search test             | 1. SearchTest.cpp          |" << endl;
-        cout << "| 2. update test             | 1. UpdateTest.cpp          |" << endl;
-        cout << "| 3. accuracy test           | 1. AccuracyTest.cpp        |" << endl;
+        cout << "| 2. update test             | 2. UpdateTest.cpp          |" << endl;
+        cout << "| 3. accuracy test           | 3. AccuracyTest.cpp        |" << endl;
         cout << "+----------------------------+----------------------------+" << endl;
 
         int selection = 0;
