@@ -1,4 +1,4 @@
-﻿#include <chrono>
+#include <chrono>
 #include <iostream>
 #include "Client.h"
 #include "Utils.h"
@@ -127,63 +127,26 @@ int main() {
 	if ((cin >> inputMRL)) {
 		MAXCOUNT = inputMRL;
 	}
-	Client client(db_size, alpha, MAXCOUNT);
+	Client* client = new Client(db_size, alpha, MAXCOUNT);
 	chrono::high_resolution_clock::time_point time_start, time_end;
-	chrono::microseconds time_diff;
+	chrono::microseconds time_diff(0);
 
 	//Setup
-	time_start = chrono::high_resolution_clock::now();
-	client.setup(input);
-	time_end = chrono::high_resolution_clock::now();
-	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
-
-	//Search
-	cout << "\n" << "Search Keyword : test" << endl;
-	vector<string> res = client.search("test");
-
-	int count = 10;
-	chrono::microseconds query_time_sum(0);
-	for (int i = 0; i < count; i++) {
+	client->setup(input);
+	delete client;
+	for (int i = 0; i < 10;i++) {
+		cout << "Number of try: " << i + 1 << endl;
+		client = new Client(db_size, alpha, MAXCOUNT);
 		time_start = chrono::high_resolution_clock::now();
-		client.search("test");
+		client->setup(input);
 		time_end = chrono::high_resolution_clock::now();
-		cout << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << " microseconds]" << endl;
-		query_time_sum += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+		time_diff += chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+		delete client;
 	}
 
-	cout << "Search Done [Total: " << query_time_sum.count() / count << " microseconds]" << endl;
-	cout << "Per result: " << query_time_sum.count() / count / MAXCOUNT / 1000.0 << " ms" << endl;
+	cout << "Setup Done [" << time_diff.count() / 10 << " microseconds]" << endl;
 
-	//Remove the dummy entities in raw search results.
-	vector<int> inds = client.process("test", res);
-	cout << "processed search result:" << inds.size() << endl;
-	for (auto ind : inds) {
-		cout << ind << endl;
-	}
 
-	//Update
-	cout << "\n" << "ADD 100 entities for keyword 'update'";
-	time_start = chrono::high_resolution_clock::now();
-	for (int i = 0; i < 100; i++) {
-		time_start = chrono::high_resolution_clock::now();
-		client.update("update", i, ADD);
-	}
-	time_end = chrono::high_resolution_clock::now();
-	cout << "Total time: [" << chrono::duration_cast<chrono::microseconds>(time_end - time_start).count() << " microseconds]" << endl;
-	cout << "DEL 8 entities for keyword test";
-	for (int i = 0; i < 8; i++) {
-		client.update("test", i, DEL);
-	}
-	res.clear();
-	inds.clear();
-	res = client.search("test");
-	inds = client.process("test", res);
-	cout << "Search 'test', processed search result:" << inds.size() << endl;
-	for (auto ind : inds) {
-		cout << ind << ", ";
-	}
-	cout << endl;
 
 	return 0;
 }

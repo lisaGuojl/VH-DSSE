@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-9/root/usr/bin/c++ CMakeFiles/StaticTest.dir/static/Source.cpp.o CMakeFiles/StaticTest.dir/static/ClientHandler.cpp.o CMakeFiles/StaticTest.dir/static/ServerHandler.cpp.o CMakeFiles/StaticTest.dir/kuku/cuckoo.cpp.o CMakeFiles/StaticTest.dir/dPRF/GGMTree.cpp.o CMakeFiles/StaticTest.dir/utils/Utils.cpp.o -o StaticTest  /usr/lib64/libcrypto.so 

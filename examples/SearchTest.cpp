@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include <ctime>        // std::time
 #include <cstdlib>
-#include <unistd.h>
+//#include <unistd.h>
 using namespace std;
 
 
@@ -20,8 +20,8 @@ string random_string_s(std::size_t length)
 }
 
 
-vector<kv> generate_samples_s(int size, int* p) {
-	vector<kv> data(0);
+auto generate_samples_s(int size, int* p) {
+	//vector<kv> data(0);
 	vector<string> keywords = { "test" };
 	vector<int> counts = { 500 };
 	int total = counts[0];
@@ -42,8 +42,10 @@ vector<kv> generate_samples_s(int size, int* p) {
 	auto it = max_element(std::begin(counts), std::end(counts));
 	*p = *it;
 
+	vector<SetupInput> input(0);
 	for (int i = 0;i < keywords.size(); i++) {
 		cout << keywords[i] << " : " << counts[i] << endl;
+		vector<kv> data(0);
 		for (int j = 0; j < counts[i];j++) {
 			kv sample;
 			sample.keyword = keywords[i];
@@ -53,9 +55,9 @@ vector<kv> generate_samples_s(int size, int* p) {
 			sample.text = keywords[i] + id + "ADD";
 			data.emplace_back(sample);
 		}
+		input.emplace_back(SetupInput{ keywords[i],counts[i],data });
 	}
-	random_shuffle(data.begin(), data.end());
-	return data;
+	return input;
 }
 
 int SearchTest() {
@@ -69,7 +71,7 @@ int SearchTest() {
 	int MAXCOUNT = 0;
 	cout << "------------------------" << endl;
 	cout << "keywords and counts: " << endl;
-	vector<kv> dataset = generate_samples_s(db_size, &MAXCOUNT);
+	vector<SetupInput> dataset = generate_samples_s(db_size, &MAXCOUNT);
 	cout << "maximum response length: " << MAXCOUNT << endl;
 	cout << "------------------------" << endl;
 	cout << " MRL for query test : " << endl;
@@ -87,7 +89,7 @@ int SearchTest() {
 	time_end = chrono::high_resolution_clock::now();
 	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
 	cout << "Setup Done [" << time_diff.count() << " microseconds]" << endl;
-	
+
 	//Search
 	cout << "\n" << "Search Keyword : test" << endl;
 	vector<string> res = client.search("test");
@@ -109,7 +111,7 @@ int SearchTest() {
 	vector<int> inds = client.process("test", res);
 	cout << "processed search result:" << inds.size() << endl;
 	for (auto ind : inds) {
-	//	cout << ind << endl;
+		//	cout << ind << endl;
 	}
 
 

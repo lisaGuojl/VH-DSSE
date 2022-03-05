@@ -34,7 +34,7 @@ Client::~Client() {
 	delete clienthandler;
 }
 
-void Client::shuffleDB(vector<kv>* data) {
+void Client::processDB(vector<kv>* data) {
 	unordered_map<string, int> map;
 	vector<kv>* p = data;
 	for (int i = 0; i < p->size(); i++) {
@@ -57,7 +57,55 @@ void Client::shuffleDB(vector<kv>* data) {
 	}
 }
 
-void Client::setup(vector<kv> data) {
+bool greatSort(SetupInput a, SetupInput b) { return (a.count > b.count); }
+vector<kv> Client::constructDB(vector<SetupInput>* input, int size) {
+	vector<kv> db(0);
+	vector<SetupInput>* p = input;
+	int maxDocNum = size * beta;
+	int keywordNum = ceil(1 / beta);
+	while (db.size() < size) {
+		sort(p->begin(), p->end(), greatSort);
+		for (int i = 0; i < p->size(); i++) {
+			if (size - db.size() >= maxDocNum) {
+				if (p->at(i).count >= maxDocNum) {
+					for (int j = 0; j < maxDocNum;j++) {
+						db.push_back(p->at(i).data.back());
+						p->at(i).data.pop_back();
+					}
+					p->at(i).count = p->at(i).count - maxDocNum;
+				}
+				else {
+					for (int j = 0; j < p->at(i).count; j++) {
+						db.push_back(p->at(i).data.back());
+						p->at(i).data.pop_back();
+					}
+					p->at(i).count = 0;
+				}
+			}
+			else {
+				int restNum = size - db.size();
+				if (p->at(i).count >= restNum) {
+					for (int j = 0; j < restNum; j++) {
+						db.push_back(p->at(i).data.back());
+						p->at(i).data.pop_back();
+					}
+					p->at(i).count = p->at(i).count - restNum;
+					break;
+				}
+				else {
+					for (int j = 0; j < p->at(i).count; j++) {
+						db.push_back(p->at(i).data.back());
+						p->at(i).data.pop_back();
+					}
+					p->at(i).count = 0;
+				}
+			}
+		}
+	}
+	return db;
+}
+
+void Client::setup(vector<SetupInput> input) {
 	EDBs.clear();
 	int idx = 0;
 	int logN = floor(log2(N));
@@ -67,8 +115,8 @@ void Client::setup(vector<kv> data) {
 	for (int i = logN; i >= min; i--) {
 		if (bits[i] == 1) {
 			exist[i] = true;
-			vector<kv> db(data.begin() + idx, data.begin() + idx + (int)(1 << i));
-			shuffleDB(&db);
+			vector<kv> db=constructDB(&input, (int)(1 << i));
+			processDB(&db);
 			int stash_len = clienthandler->setup((int)1 << i, prf_seeds[i], db);
 			EDBs.emplace_back(make_pair(i, clienthandler->get_edb()));
 			if (stash_len > 0) {
@@ -81,17 +129,18 @@ void Client::setup(vector<kv> data) {
 		}
 	}
 	if (idx < N) {
-		for (int i = idx;i < N;i++) {
-			kv item = data[i];
-			unsigned long index = clienthandler->get_index(item.keyword, item.ind);
-			string text = to_string(index) + "0";
-			unsigned char* data = new unsigned char[text.length() + 1];
-			stringcpy((char*)data, text.length() + 1, text.c_str());
-			int ciphertext_len = 0;
-			unsigned char ciphertext[100] = {};
-			ciphertext_len = aes_encrypt(data, text.length(), Kbuf, iv, ciphertext);
-			EBUF.emplace_back(string((char*)ciphertext, ciphertext_len));
-
+		for (int i = 0; i < input.size(); i++) {
+			for (int j = 0; j < input[i].count; j++) {
+				kv item = input[i].data[j];
+				unsigned long index = clienthandler->get_index(item.keyword, item.ind);
+				string text = to_string(index) + "0";
+				unsigned char* data = new unsigned char[text.length() + 1];
+				stringcpy((char*)data, text.length() + 1, text.c_str());
+				int ciphertext_len = 0;
+				unsigned char ciphertext[100] = {};
+				ciphertext_len = aes_encrypt(data, text.length(), Kbuf, iv, ciphertext);
+				EBUF.emplace_back(string((char*)ciphertext, ciphertext_len));
+			}
 		}
 	}
 	server->storeEDB(EDBs, ESTASH, EBUF, min, logN);

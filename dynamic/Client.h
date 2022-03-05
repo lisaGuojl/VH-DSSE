@@ -13,6 +13,11 @@
 using namespace cuckoo;
 using namespace std;
 
+struct SetupInput {
+    string keyword;
+    int count;
+    vector<kv> data;
+};
 
 class Client {
 private:
@@ -40,13 +45,14 @@ private:
 
 
     string decrypt(string& cipher, uint8_t* key);
-    void shuffleDB(vector<kv>* data);
+    void processDB(vector<kv>* data);
+    vector<kv> constructDB(vector<SetupInput>* input, int size);
     void updateDB();
 
 public:
     Client(int size, float alpha, int mrl);
     ~Client();
-    void setup(vector<kv> data);
+    void setup(vector<SetupInput> input);
     vector<string> search(const string& keyword);
     void update(const string& keyword, int ind, OP op);
 
